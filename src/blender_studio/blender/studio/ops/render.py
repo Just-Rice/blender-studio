@@ -80,7 +80,7 @@ def _write(scene, path):
 
 
 @command(mutates=False)
-def render(quality="preview", path=None, engine=None, samples=None, transparent=False):
+def render(quality="preview", path=None, engine=None, samples=None, transparent=False, at_seconds=None):
     quality = quality.lower()
     if quality not in QUALITY:
         raise ValueError(f"Unknown quality '{quality}'. Choose from: {', '.join(QUALITY)}")
@@ -92,6 +92,8 @@ def render(quality="preview", path=None, engine=None, samples=None, transparent=
     scene.render.resolution_percentage = spec["percent"]
     scene.render.film_transparent = bool(transparent)
     path = path or state.render_path(quality)
+    if at_seconds is not None:
+        scene.frame_set(util.to_frame(at_seconds))
     try:
         _write(scene, path)
     finally:
@@ -132,3 +134,54 @@ def contact_sheet(subjects=None):
         bpy.data.objects.remove(cam, do_unlink=True)
         bpy.data.cameras.remove(data)
     return {"views": shots}
+
+
+@command(mutates=False)
+def render_animation(path=None, quality="draft", seconds=None, start_seconds=0.0, strip_frames=6):
+    """Render the timeline to an MP4 video, plus a few still frames so the motion can be checked."""
+    quality = quality.lower()
+    if quality not in QUALITY:
+        raise ValueError(f"Unknown quality '{quality}'. Choose from: {', '.join(QUALITY)}")
+    scene = bpy.context.scene
+    if scene.camera is None:
+        raise ValueError("There is no camera yet. Call frame_camera first.")
+    if not scene.get("studio_animated") or scene.frame_end <= 1:
+        raise ValueError("Nothing is animated yet. Use animate, animate_character, drop_objects or play_animation.")
+    spec = QUALITY[quality]
+    first = util.to_frame(start_seconds)
+    last = util.to_frame(start_seconds + seconds) if seconds else scene.frame_end
+    last = max(first + 1, min(last, scene.frame_end))
+    used = _configure(scene, spec["engine"], min(spec["samples"], 32 if spec["engine"] == "eevee" else 96))
+    render, settings = scene.render, scene.render.image_settings
+    saved = (scene.frame_start, scene.frame_end, scene.frame_current, render.resolution_x, render.resolution_y,
+             render.resolution_percentage, render.filepath, render.film_transparent)
+    path = path or state.render_path("video", "mp4")
+    stills = []
+    try:
+        # H.264 needs even dimensions, so bake the scale into the size.
+        render.resolution_x = int(saved[3] * spec["percent"] / 100) // 2 * 2
+        render.resolution_y = int(saved[4] * spec["percent"] / 100) // 2 * 2
+        render.resolution_percentage = 100
+        render.film_transparent = False
+        scene.frame_start, scene.frame_end = first, last
+        util.set_if(settings, "media_type", "VIDEO")
+        settings.file_format = "FFMPEG"
+        render.ffmpeg.format, render.ffmpeg.codec = "MPEG4", "H264"
+        render.ffmpeg.constant_rate_factor = "HIGH"
+        render.ffmpeg.ffmpeg_preset = "GOOD"
+        render.ffmpeg.audio_codec = "NONE"
+        render.filepath = path
+        bpy.ops.render.render(animation=True)
+        count = max(2, min(int(strip_frames), 12))
+        for index in range(count):
+            frame = first + round((last - first) * index / (count - 1))
+            scene.frame_set(frame)
+            still = state.render_path(f"strip-{index:02d}")
+            _write(scene, still)
+            stills.append({"seconds": round((frame - 1) / util.fps(), 2), "path": still})
+    finally:
+        (scene.frame_start, scene.frame_end, frame_current, render.resolution_x, render.resolution_y,
+         render.resolution_percentage, render.filepath, render.film_transparent) = saved
+        scene.frame_set(frame_current)
+    return {"path": path, "engine": used, "seconds": round((last - first + 1) / util.fps(), 2),
+            "frames": last - first + 1, "fps": round(util.fps(), 2), "stills": stills}

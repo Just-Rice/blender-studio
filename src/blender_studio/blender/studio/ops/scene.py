@@ -57,10 +57,17 @@ def _describe(obj):
 @command(mutates=False)
 def scene_info():
     scene = bpy.context.scene
-    subjects = util.subjects()
+    everything = util.subjects()
+    # A character is dozens of parts; report it as one thing.
+    subjects = [o for o in everything if "studio_character" not in o]
     helpers = [o for o in scene.objects if util.is_helper(o)]
-    others = [o for o in scene.objects if o not in subjects and not util.is_helper(o)]
+    characters = [o for o in scene.objects if o.type == "ARMATURE" and "studio_character" in o]
+    others = [o for o in scene.objects if o not in everything and not util.is_helper(o) and o not in characters]
     info = {
+        "characters": [{"name": c.name, "style": c["studio_character"], "height": round(c["studio_height"], 2),
+                        "location": util.rounded(c.location),
+                        "facing_deg": round(math.degrees(c.rotation_euler.z), 1)} for c in characters],
+        "timeline_seconds": round((scene.frame_end - 1) / util.fps(), 2) if scene.get("studio_animated") else 0,
         "objects": [_describe(o) for o in subjects[:80]],
         "object_count": len(subjects),
         "studio_equipment": [f"{o.name} ({o.type.lower()})" for o in helpers],
@@ -72,8 +79,8 @@ def scene_info():
             "look": scene.view_settings.look,
         },
     }
-    if subjects:
-        lo, hi, center, radius = util.bounds(subjects)
+    if everything:
+        lo, hi, center, radius = util.bounds(everything)
         info["bounds"] = {"min": util.rounded(lo), "max": util.rounded(hi),
                           "center": util.rounded(center), "radius": round(radius, 3)}
     return info
@@ -225,7 +232,11 @@ def import_model(path, name=None, fit_height=None):
     ext = os.path.splitext(path)[1].lower()
     before = set(bpy.data.objects)
     if ext in (".glb", ".gltf"):
-        bpy.ops.import_scene.gltf(filepath=path)
+        try:
+            # Without this the importer adds a stray sphere used only to draw bones.
+            bpy.ops.import_scene.gltf(filepath=path, disable_bone_shape=True)
+        except TypeError:
+            bpy.ops.import_scene.gltf(filepath=path)
     elif ext == ".obj":
         bpy.ops.wm.obj_import(filepath=path)
     elif ext == ".stl":

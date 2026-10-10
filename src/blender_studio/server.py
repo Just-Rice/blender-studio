@@ -22,6 +22,10 @@ Work like a photographer, in this order:
 4. scene_check, then render_preview and LOOK at the picture. Fix what is wrong and render again.
 5. Only when the preview looks right: render_final.
 
+Beyond basic shapes there are tools for organic forms (create_rock, create_terrain, create_blob, create_limbs,
+sculpt, boolean), people (create_character, create_human, pose_character), and motion (animate,
+animate_character, drop_objects, drape_cloth, render_animation for video).
+
 Never finish without looking at a render. Call design_guide once before your first scene for the craft rules.
 Units are metres, Z is up, the front of the scene faces -Y. Every change can be reversed with undo."""
 
@@ -249,10 +253,42 @@ def _render(quality, **args):
 
 
 @mcp.tool()
-def render_preview(quality: Literal["draft", "preview"] = "preview") -> list:
+def render_preview(quality: Literal["draft", "preview"] = "preview", at_seconds: Optional[float] = None) -> list:
     """Render the camera view quickly and return the picture so you can judge it. 'draft' is half size and
-    fastest. Look closely at composition, lighting and materials, then fix and render again."""
-    return _render(quality)
+    fastest. Look closely at composition, lighting and materials, then fix and render again.
+    at_seconds picks a moment of an animation to look at."""
+    return _render(quality, at_seconds=at_seconds)
+
+
+def _sheet(cells, columns, cell_w, cell_h):
+    rows = -(-len(cells) // columns)
+    sheet = PILImage.new("RGB", (cell_w * columns, cell_h * rows), (24, 24, 28))
+    draw = ImageDraw.Draw(sheet)
+    for index, (label, path) in enumerate(cells):
+        x, y = (index % columns) * cell_w, (index // columns) * cell_h
+        sheet.paste(PILImage.open(path).convert("RGB").resize((cell_w, cell_h)), (x, y))
+        draw.rectangle((x, y, x + 12 + 7 * len(label), y + 22), fill=(0, 0, 0))
+        draw.text((x + 6, y + 5), label, fill=(255, 255, 255))
+    return sheet
+
+
+@mcp.tool()
+def render_animation(
+    quality: Literal["draft", "preview", "final"] = "draft",
+    path: Optional[str] = None,
+    seconds: Optional[float] = None,
+    start_seconds: float = 0.0,
+) -> list:
+    """Render the animation to an MP4 video file and return a strip of still frames from it so you can check
+    the motion. 'draft' is half size and quick; 'preview' is full size; 'final' uses the slow, realistic
+    renderer (minutes per second of video). seconds limits the length; by default the whole timeline is rendered."""
+    result = call("render_animation", quality=quality, path=path, seconds=seconds, start_seconds=start_seconds)
+    first = PILImage.open(result["stills"][0]["path"])
+    cell_w = 420
+    cell_h = round(cell_w * first.height / first.width)
+    strip = _sheet([(f"{s['seconds']}s", s["path"]) for s in result["stills"]], 3, cell_w, cell_h)
+    summary = {key: result[key] for key in ("path", "engine", "seconds", "frames", "fps")}
+    return [_jpeg(strip, 1280), json.dumps({"video_saved_to": summary.pop("path"), **summary})]
 
 
 @mcp.tool()
@@ -267,16 +303,235 @@ def contact_sheet(subjects: Names = None) -> list:
     """Show the subject from five angles (front, right, back, top, three-quarter) in plain studio shading.
     Use it to check shape, proportions and that parts actually join up, which a single view can hide."""
     views = call("contact_sheet", subjects=subjects)["views"]
-    cell_w, cell_h, columns = 480, 360, 3
-    rows = -(-len(views) // columns)
-    sheet = PILImage.new("RGB", (cell_w * columns, cell_h * rows), (24, 24, 28))
-    draw = ImageDraw.Draw(sheet)
-    for index, view in enumerate(views):
-        x, y = (index % columns) * cell_w, (index // columns) * cell_h
-        sheet.paste(PILImage.open(view["path"]).convert("RGB").resize((cell_w, cell_h)), (x, y))
-        draw.rectangle((x, y, x + 12 + 8 * len(view["label"]), y + 22), fill=(0, 0, 0))
-        draw.text((x + 6, y + 5), view["label"], fill=(255, 255, 255))
+    sheet = _sheet([(view["label"], view["path"]) for view in views], 3, 480, 360)
     return [_jpeg(sheet, 1440), "Views: " + ", ".join(view["label"] for view in views)]
+
+
+# --- organic shapes --------------------------------------------------------
+
+@mcp.tool()
+def create_rock(
+    name: Optional[str] = None,
+    size: float = 1.0,
+    roughness: float = 0.35,
+    style: Literal["smooth", "lowpoly"] = "smooth",
+    seed: int = 0,
+    location: Optional[list[float]] = None,
+) -> dict:
+    """Make a natural-looking rock or boulder about `size` metres across, resting flat on `location`.
+    roughness 0.1 is a river pebble, 0.6 is craggy. Each seed gives a different rock."""
+    return call("create_rock", name=name, size=size, roughness=roughness, style=style, seed=seed, location=location)
+
+
+@mcp.tool()
+def create_terrain(
+    name: Optional[str] = None,
+    size: float = 10.0,
+    height: float = 1.5,
+    detail: float = 1.0,
+    style: Literal["smooth", "lowpoly"] = "smooth",
+    island: bool = False,
+    seed: int = 0,
+    location: Optional[list[float]] = None,
+) -> dict:
+    """Make hilly ground `size` metres wide with hills up to `height` metres. detail above 1 gives more,
+    smaller hills. island=True makes the land fall away to zero at the edges. Each seed is a different landscape."""
+    return call("create_terrain", name=name, size=size, height=height, detail=detail, style=style, island=island,
+                seed=seed, location=location)
+
+
+@mcp.tool()
+def create_blob(balls: list[list[float]], name: Optional[str] = None, location: Optional[list[float]] = None) -> dict:
+    """Make one soft organic shape from spheres that melt together where they overlap: clouds, bodies,
+    blobby creatures, snowmen, dough. balls is [[x, y, z, radius], ...]; overlap them by a third or more."""
+    return call("create_blob", balls=balls, name=name, location=location)
+
+
+@mcp.tool()
+def create_limbs(
+    joints: dict[str, list[float]],
+    links: list[list[str]],
+    name: Optional[str] = None,
+    smoothness: int = 2,
+    location: Optional[list[float]] = None,
+) -> dict:
+    """Wrap a smooth skin around a stick skeleton, for creatures, trees, tentacles, handles and pipes.
+    joints maps a name to [x, y, z, radius]; links lists which joints connect, e.g. [["hip", "chest"],
+    ["chest", "head"]]. Radius sets the thickness at each joint. The first joint is the root."""
+    return call("create_limbs", joints=joints, links=links, name=name, smoothness=smoothness, location=location)
+
+
+@mcp.tool()
+def sculpt(
+    objects: Union[str, list[str]],
+    roughness: float = 0.0,
+    detail: float = 1.0,
+    smooth: int = 0,
+    remesh: float = 0.0,
+    subdivide: int = 0,
+) -> dict:
+    """Reshape existing objects without brush strokes. roughness pushes the surface in and out with natural
+    noise (0.05 is a dented, hand-made look; 0.3 is lumpy); detail above 1 makes the lumps smaller.
+    smooth 1-5 melts sharp features. remesh (0.02-0.08) fuses overlapping parts into one clean skin;
+    smaller is finer. subdivide 1-3 rounds the shape. Calling again replaces the earlier settings."""
+    return call("sculpt", objects=objects, roughness=roughness, detail=detail, smooth=smooth, remesh=remesh,
+                subdivide=subdivide)
+
+
+@mcp.tool()
+def boolean(
+    target: str,
+    cutter: str,
+    operation: Literal["difference", "union", "intersect"] = "difference",
+    keep_cutter: bool = False,
+) -> dict:
+    """Carve one object with another. 'difference' cuts the cutter's shape out of the target (holes,
+    windows, bites, hollows); 'union' fuses them; 'intersect' keeps only where they overlap.
+    The cutter is removed afterwards unless keep_cutter is set."""
+    return call("boolean", target=target, cutter=cutter, operation=operation, keep_cutter=keep_cutter)
+
+
+# --- people ----------------------------------------------------------------
+
+@mcp.tool()
+def create_character(
+    name: str = "Character",
+    style: Literal["toy", "lowpoly", "blocky"] = "toy",
+    height: float = 1.7,
+    skin: str = "#e2b091",
+    top: str = "#3f7fd0",
+    bottom: str = "#2c3550",
+    shoes: str = "#f1eee8",
+    hair: Optional[str] = "#3a2a20",
+    location: Optional[list[float]] = None,
+    facing_deg: float = 0.0,
+    pose: str = "stand",
+) -> dict:
+    """Add a stylised person with working joints. 'toy' is a rounded vinyl figure with a big head, 'lowpoly'
+    is faceted with natural proportions, 'blocky' is a voxel-game figure. Colours are '#rrggbb'; hair "none"
+    is bald. The feet stand on `location`. facing_deg 0 faces the front, 90 faces right, 180 faces away.
+    Poses: stand, t_pose, wave, cheer, walk, run, sit, point, hands_on_hips, think, jump.
+    Use the character's name with transform_object, frame_camera or apply_material to affect all of it;
+    individual parts are named like 'Name Torso' or 'Name Hair'."""
+    return call("create_character", name=name, style=style, height=height, skin=skin, top=top, bottom=bottom,
+                shoes=shoes, hair=hair or "none", location=location, facing_deg=facing_deg, pose=pose)
+
+
+@mcp.tool()
+def create_human(
+    name: str = "Human",
+    gender: Literal["female", "neutral", "male"] = "neutral",
+    age: Literal["young", "adult", "elder"] = "adult",
+    muscle: float = 0.5,
+    weight: float = 0.5,
+    height: float = 1.7,
+    skin: str = "#c98f6b",
+    top: str = "#3f6fa8",
+    bottom: str = "#2b3040",
+    shoes: str = "#1d1d21",
+    hair: Optional[str] = "#2a1d16",
+    location: Optional[list[float]] = None,
+    facing_deg: float = 0.0,
+    pose: str = "stand",
+) -> dict:
+    """Add a realistically proportioned adult human body, made with the free MPFB (MakeHuman) add-on, which
+    is downloaded and installed into Blender the first time this is used. muscle and weight run 0-1.
+    The outfit is painted on (short-sleeved top, trousers, shoes, cropped hair), so it reads as a clothed
+    person at medium distance but not in close-up. Takes the same poses and motion clips as create_character.
+    For stylised scenes prefer create_character."""
+    return call("create_human", name=name, gender=gender, age=age, muscle=muscle, weight=weight, height=height,
+                skin=skin, top=top, bottom=bottom, shoes=shoes, hair=hair or "none", location=location,
+                facing_deg=facing_deg, pose=pose)
+
+
+@mcp.tool()
+def pose_character(
+    character: str,
+    pose: Optional[str] = None,
+    bones: Optional[dict[str, list[float]]] = None,
+) -> dict:
+    """Pose a figure for a still picture. pose is a preset (see create_character). bones fine-tunes or poses
+    any rig by hand as {bone: [bend_forward, twist, raise_sideways]} in degrees; figures made here have
+    hips, spine, head, and upper_arm, forearm, thigh, shin each ending in .L or .R. For a sideways raise,
+    left limbs use positive angles and right limbs negative. Posing removes any animation on the figure."""
+    return call("pose_character", character=character, pose=pose, bones=bones)
+
+
+@mcp.tool()
+def animate_character(
+    character: str,
+    clip: Literal["walk", "run", "wave", "idle", "jump", "dance"],
+    seconds: float = 4.0,
+    start_seconds: float = 0.0,
+    distance: float = 0.0,
+) -> dict:
+    """Make a create_character or create_human figure move. distance carries it forward that many metres over the clip
+    (about 1.3 m per second suits walk, 4 for run). Clips can follow one another using start_seconds."""
+    return call("animate_character", character=character, clip=clip, seconds=seconds,
+                start_seconds=start_seconds, distance=distance)
+
+
+@mcp.tool()
+def list_animations() -> dict:
+    """List the rigs in the scene with their bone names, and any motion clips that came with imported files
+    (for example a character downloaded from Mixamo or Ready Player Me and loaded with import_model)."""
+    return call("list_animations")
+
+
+@mcp.tool()
+def play_animation(target: str, clip: str) -> dict:
+    """Play one of an imported file's own motion clips (see list_animations) on a rig or object."""
+    return call("play_animation", target=target, clip=clip)
+
+
+# --- motion ----------------------------------------------------------------
+
+@mcp.tool()
+def animate(
+    kind: Literal["turntable", "camera_orbit", "dolly", "bounce", "spin", "float", "grow", "light_fade"],
+    target: Names = None,
+    seconds: float = 4.0,
+    amount: Optional[float] = None,
+    start_seconds: float = 0.0,
+) -> dict:
+    """Add simple motion. turntable: the subject spins once, looping seamlessly. camera_orbit: the camera
+    circles (amount = degrees). dolly: the camera glides in (amount = fraction of the distance).
+    bounce / spin / float / grow: move the named target (amount = hop height, turns, or bob height).
+    light_fade: the lights rise from darkness. Several can be combined."""
+    return call("animate", kind=kind, target=target, seconds=seconds, amount=amount, start_seconds=start_seconds)
+
+
+@mcp.tool()
+def drop_objects(
+    objects: Union[str, list[str]],
+    seconds: float = 3.0,
+    bounciness: float = 0.25,
+    friction: float = 0.6,
+    keep_animation: bool = True,
+) -> dict:
+    """Let objects fall, bounce and tumble with real physics until they settle on the floor and on each
+    other. Start them in the air, not overlapping. With keep_animation=False only the final resting
+    positions are kept, which is the way to get a naturally scattered pile for a still picture."""
+    return call("drop_objects", objects=objects, seconds=seconds, bounciness=bounciness, friction=friction,
+                keep_animation=keep_animation)
+
+
+@mcp.tool()
+def drape_cloth(
+    over: Names = None,
+    name: str = "Cloth",
+    size: Optional[float] = None,
+    color: str = "#b9c4d6",
+) -> dict:
+    """Drop a sheet of fabric onto objects and keep the folds: tablecloths, covers, blankets, a reveal
+    sheet. It lands on the named objects (or everything) and the floor. size is the sheet's width in metres."""
+    return call("drape_cloth", over=over, name=name, size=size, color=color)
+
+
+@mcp.tool()
+def clear_animation(objects: Names = None) -> dict:
+    """Remove motion from the named objects, or from the whole scene if none are named."""
+    return call("clear_animation", objects=objects)
 
 
 # --- assets and files ------------------------------------------------------

@@ -1,6 +1,6 @@
 [project]
 name = "blender-studio-mcp"
-version = "0.1.0"
+version = "0.2.0"
 description = "Lets Claude and other AI models make good-looking 3D art in Blender: lighting, materials, camera and a look-and-fix loop."
 readme = "README.md"
 requires-python = ">=3.10"

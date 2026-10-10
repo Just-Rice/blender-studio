@@ -22,7 +22,9 @@ from blender_studio.server import GUIDE, INSTRUCTIONS
 
 MODEL = os.environ.get("GEMINI_MODEL", "gemini-flash-latest")
 API = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL}:generateContent"
-MAX_TURNS = int(os.environ.get("GEMINI_MAX_TURNS", "24"))
+# The free tier allows roughly 20 requests per model per day, so a run has to fit well inside that.
+MAX_TURNS = int(os.environ.get("GEMINI_MAX_TURNS", "10"))
+THINKING = os.environ.get("GEMINI_THINKING", "low")
 TOOLS = {"list_presets", "scene_info", "create_object", "transform_object", "delete_objects", "apply_material",
          "add_polish", "add_backdrop", "studio_lighting", "frame_camera", "set_look", "scene_check",
          "render_preview", "contact_sheet", "undo"}
@@ -31,8 +33,10 @@ BRIEF = f"""You are a 3D artist using Blender Studio.
 {INSTRUCTIONS}
 
 This is a cut-down preview: there is no run_python and no render_final, so build from the basic shapes
-(scale and rotate them inventively) and treat render_preview as your final output. You have about
-{MAX_TURNS} turns. You may call several tools in one turn. After each render_preview you will be shown
+(scale and rotate them inventively) and treat render_preview as your final output. You have only
+{MAX_TURNS} turns, so call many tools in each turn: build the whole subject in your first turn or two,
+then materials, backdrop, lighting and camera together, then render. Keep the model to about 15 parts.
+Do not call scene_info or list_presets; everything you need is below. After each render_preview you will be shown
 the picture: say in one or two sentences what is wrong with it, then fix it. Render at least twice.
 When you are happy, reply with a short description of the finished picture and no tool call.
 
@@ -67,11 +71,15 @@ def simplify(schema):
 
 
 def ask_gemini(key, contents, declarations):
-    body = json.dumps({
+    request_body = {
         "systemInstruction": {"parts": [{"text": BRIEF}]},
         "contents": contents,
         "tools": [{"functionDeclarations": declarations}],
-    }).encode()
+    }
+    if THINKING:
+        # Long private reasoning makes each turn take minutes; the craft rules are already spelled out.
+        request_body["generationConfig"] = {"thinkingConfig": {"thinkingLevel": THINKING}}
+    body = json.dumps(request_body).encode()
     for attempt in range(6):
         request = urllib.request.Request(API, data=body, headers={"Content-Type": "application/json",
                                                                   "x-goog-api-key": key})
@@ -80,7 +88,17 @@ def ask_gemini(key, contents, declarations):
                 return json.loads(response.read())
         except urllib.error.HTTPError as error:
             detail = error.read().decode(errors="replace")
+            if error.code == 400 and "thinking" in detail.lower() and "generationConfig" in request_body:
+                del request_body["generationConfig"]
+                body = json.dumps(request_body).encode()
+                continue
+            if error.code == 429 and "free_tier_requests" in detail:
+                # A daily allowance, not a momentary spike: waiting will not help.
+                wait = detail.split("Please retry in ")[-1].split('"')[0].strip(". ") if "retry in" in detail else "?"
+                raise RuntimeError(f"The free daily allowance for {MODEL} is used up (resets in {wait}). "
+                                   "Set GEMINI_MODEL to another model or try again later.") from None
             if error.code in (429, 500, 503) and attempt < 5:
+                print(f"    (Gemini is busy, code {error.code}; waiting {8 * (attempt + 1)}s)", flush=True)
                 time.sleep(8 * (attempt + 1))
                 continue
             raise RuntimeError(f"Gemini returned {error.code}: {detail[:600]}") from None
@@ -98,8 +116,16 @@ async def run(out, prompt):
         ]
         contents = [{"role": "user", "parts": [{"text": prompt}]}]
         shot = 0
+        reply = {}
         for turn in range(MAX_TURNS):
-            reply = ask_gemini(key, contents, declarations)
+            asked = time.time()
+            try:
+                reply = ask_gemini(key, contents, declarations)
+            except RuntimeError as error:
+                log["stopped"] = str(error)
+                print(f"    stopped: {error}", flush=True)
+                break
+            print(f"    (Gemini answered in {time.time() - asked:.0f}s)", flush=True)
             candidate = (reply.get("candidates") or [{}])[0]
             parts = candidate.get("content", {}).get("parts", [])
             said = " ".join(p["text"] for p in parts if "text" in p and not p.get("thought")).strip()
@@ -132,8 +158,16 @@ async def run(out, prompt):
                 answers.append({"functionResponse": answer})
             contents.append({"role": "user", "parts": answers + pictures})
             (out / "transcript.json").write_text(json.dumps(log, indent=1))
-        usage = reply.get("usageMetadata", {})
-        log["last_turn_tokens"] = usage.get("totalTokenCount")
+        log["last_turn_tokens"] = reply.get("usageMetadata", {}).get("totalTokenCount")
+        last_calls = [c for t in log["turns"] for c in t["calls"]]
+        if last_calls and not last_calls[-1].get("image") and last_calls[-1]["tool"] != "render_preview":
+            # Gemini ran out of turns after its last change; photograph the scene as it left it.
+            result = await session.call_tool("render_preview", {"quality": "preview"})
+            for item in result.content:
+                if item.type == "image":
+                    shot += 1
+                    (out / f"shot-{shot:02d}.jpg").write_bytes(base64.b64decode(item.data))
+                    log["closing_shot"] = f"shot-{shot:02d}.jpg"
     log["finished"] = time.strftime("%Y-%m-%d %H:%M")
     (out / "transcript.json").write_text(json.dumps(log, indent=1))
     print(f"\nDone. {shot} pictures and transcript.json are in {out}")

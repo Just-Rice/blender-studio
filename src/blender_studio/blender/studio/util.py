@@ -1,4 +1,5 @@
 """Shared helpers: finding objects, measuring them, and managing the studio's helper collections."""
+import contextlib
 import warnings
 
 import bpy
@@ -58,7 +59,12 @@ def get_object(name):
 def subjects(names=None):
     """The things being photographed: named objects, or everything that is not studio equipment."""
     if names:
-        return [get_object(n) for n in as_list(names)]
+        found = []
+        for obj in (get_object(n) for n in as_list(names)):
+            # A rig or group stands for the visible parts attached to it.
+            parts = [c for c in obj.children_recursive if c.type in RENDERABLE] if obj.type not in RENDERABLE else []
+            found += parts or [obj]
+        return found
     return [
         o for o in bpy.context.scene.objects
         if o.type in RENDERABLE and not is_helper(o) and not o.hide_render
@@ -136,3 +142,42 @@ def rgba(color, default=(0.8, 0.8, 0.8, 1.0)):
 
 def rounded(vec, digits=3):
     return [round(float(v), digits) for v in vec]
+
+
+def roots(objs):
+    """Top-level owners of objs (a character's parts all lead back to its rig), without duplicates."""
+    found = []
+    for obj in objs:
+        while obj.parent is not None and not is_helper(obj.parent) and obj.parent.type != "EMPTY":
+            obj = obj.parent
+        if obj not in found:
+            found.append(obj)
+    return found
+
+
+def fps():
+    render = bpy.context.scene.render
+    return render.fps / render.fps_base
+
+
+def to_frame(seconds):
+    return 1 + int(round(float(seconds) * fps()))
+
+
+def extend_timeline(last_frame):
+    scene = bpy.context.scene
+    scene.frame_start = 1
+    scene.frame_end = max(last_frame, scene.frame_end if scene.get("studio_animated") else 1)
+    scene["studio_animated"] = True
+
+
+@contextlib.contextmanager
+def linear_keys():
+    """Keyframes inserted inside this block move at constant speed instead of easing in and out."""
+    edit = bpy.context.preferences.edit
+    saved = edit.keyframe_new_interpolation_type
+    edit.keyframe_new_interpolation_type = "LINEAR"
+    try:
+        yield
+    finally:
+        edit.keyframe_new_interpolation_type = saved

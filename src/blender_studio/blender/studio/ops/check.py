@@ -82,12 +82,13 @@ def scene_check():
         problems.append(f"No material on: {', '.join(bare[:8])}. They will render plain grey.")
 
     hard = [o.name for o in subjects if o.type == "MESH" and len(o.data.polygons) < 2000
+            and "studio_character" not in o
             and not any(m.type == "BEVEL" for m in o.modifiers)
             and any(not p.use_smooth for p in o.data.polygons)]
     if hard:
         suggestions.append(f"Razor-sharp edges on: {', '.join(hard[:8])}. add_polish gives them soft highlights.")
 
-    tiny = [o.name for o in subjects if max(o.dimensions) < radius * 0.01]
+    tiny = [o.name for o in subjects if max(o.dimensions) < radius * 0.01 and "studio_character" not in o]
     if tiny:
         suggestions.append(f"Very small compared to the scene, may be invisible: {', '.join(tiny[:8])}.")
 
