@@ -77,12 +77,14 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", type=int, default=9877)
     parser.add_argument("--watch-stdin", action="store_true")
+    parser.add_argument("--keep-startup-scene", action="store_true")
     parser.add_argument("--session-dir", default="")
     args = parser.parse_args(argv)
 
     state.init(args.session_dir)
     commands.load_all()
-    commands.dispatch("new_scene", {})
+    if not args.keep_startup_scene:
+        commands.dispatch("new_scene", {})
 
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)

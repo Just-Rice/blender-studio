@@ -92,6 +92,14 @@ is tied to Claude. It fits inside Gemini's free daily allowance.
 GEMINI_API_KEY=... uv run python examples/gemini_demo.py out "a toy rocket on a launch pad"
 ```
 
+## Does it help?
+
+A first benchmark gave the same request to the same model with plain Blender scripting and with these
+tools. A blind judge preferred the Blender Studio picture in 6 of 7 pairs. Weaker models gained most and got
+cheaper; a strong model (Claude Sonnet 5.5) gained a little and paid about 2.4 times as much, because 43
+tool descriptions travel with every request. Full numbers and limits are in
+[bench/RESULTS.md](bench/RESULTS.md).
+
 ## Options
 
 Set these as environment variables in the MCP settings if you need them.

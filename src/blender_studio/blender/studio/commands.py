@@ -15,7 +15,7 @@ def command(mutates=True):
 
 def load_all():
     for name in ("scene", "lighting", "materials", "camera", "polish", "look", "render", "check", "assets",
-                 "sculpt", "character", "human", "animate"):
+                 "sculpt", "character", "human", "animate", "raw"):
         importlib.import_module(f".ops.{name}", __package__)
 
 

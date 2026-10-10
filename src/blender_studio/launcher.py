@@ -87,6 +87,8 @@ class Blender:
                 command += ["--background", "--factory-startup"]
             command += ["--python", str(BRIDGE), "--", "--port", str(port),
                         "--session-dir", str(self.session_dir), "--watch-stdin"]
+            if os.environ.get("BLENDER_STUDIO_KEEP_SCENE"):
+                command.append("--keep-startup-scene")
             log = open(self.session_dir / "blender.log", "wb")
             self.process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=log, stderr=subprocess.STDOUT)
         deadline = time.time() + 90
@@ -121,7 +123,7 @@ class Blender:
         reply = json.loads(line)
         if not reply["ok"]:
             detail = reply["error"]
-            if cmd == "run_python":
+            if cmd in ("run_python", "raw_python"):
                 detail += "\n" + reply.get("traceback", "")
             raise BlenderError(detail)
         return reply["result"]

@@ -156,8 +156,12 @@ def create_limbs(joints, links, name=None, smoothness=2, location=None):
     obj = bpy.data.objects.new(name or "Limbs", mesh)
     bpy.context.scene.collection.objects.link(obj)
     obj.modifiers.new("Skin", "SKIN")
+    points = [joints[j][:3] for j in names]
+    span = max(max(p[i] for p in points) - min(p[i] for p in points) for i in range(3))
+    # With no thickness given, stay slender relative to the skeleton rather than assuming a size in metres.
+    slender = max(span * 0.06, 1e-4)
     for index, joint in enumerate(names):
-        radius = float(joints[joint][3]) if len(joints[joint]) > 3 else 0.1
+        radius = float(joints[joint][3]) if len(joints[joint]) > 3 else slender
         mesh.skin_vertices[0].data[index].radius = (radius, radius)
         mesh.skin_vertices[0].data[index].use_root = index == 0
     if smoothness:

@@ -357,7 +357,8 @@ def create_limbs(
 ) -> dict:
     """Wrap a smooth skin around a stick skeleton, for creatures, trees, tentacles, handles and pipes.
     joints maps a name to [x, y, z, radius]; links lists which joints connect, e.g. [["hip", "chest"],
-    ["chest", "head"]]. Radius sets the thickness at each joint. The first joint is the root."""
+    ["chest", "head"]]. Radius sets the thickness at each joint, in metres; leave it out for a slender default
+    sized to the skeleton. The first joint is the root."""
     return call("create_limbs", joints=joints, links=links, name=name, smoothness=smoothness, location=location)
 
 
