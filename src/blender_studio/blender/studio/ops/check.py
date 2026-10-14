@@ -40,7 +40,7 @@ def scene_check():
     if cam is None:
         problems.append("No camera. Call frame_camera.")
     else:
-        points = [world_to_camera_view(scene, cam, c) for c in util.bbox_corners(subjects)]
+        points = [world_to_camera_view(scene, cam, c) for c in util.shape_points(subjects)]
         visible = [p for p in points if p.z > 0 and 0 <= p.x <= 1 and 0 <= p.y <= 1]
         if not visible:
             problems.append("The camera cannot see the subject at all. Call frame_camera.")
@@ -60,6 +60,7 @@ def scene_check():
     ground = lo.z if floor is None else floor
     slack = radius * 0.02
     boxes = {o.name: _box(o) for o in subjects}
+    floating = []
     for obj in subjects:
         box = boxes[obj.name]
         if floor is not None and box[1].z < floor - slack:
@@ -68,14 +69,25 @@ def scene_check():
             problems.append(f"'{obj.name}' sinks {floor - box[0].z:.3f} m into the floor.")
         elif box[0].z > ground + slack and not any(
                 _touching(box, other, slack) for name, other in boxes.items() if name != obj.name):
-            problems.append(f"'{obj.name}' is floating {box[0].z - ground:.3f} m above the ground, touching nothing.")
+            floating.append((obj.name, box[0].z - ground))
+    if len(floating) == 1:
+        problems.append(f"'{floating[0][0]}' is floating {floating[0][1]:.3f} m above the ground, touching nothing.")
+    elif floating:
+        names = ", ".join(name for name, _ in floating[:6]) + (" and others" if len(floating) > 6 else "")
+        problems.append(f"{len(floating)} objects float above the ground touching nothing ({names}). "
+                        "Ignore this if they are meant to hang in the air.")
 
-    seen = {}
+    # Two objects are duplicates only if their actual shapes coincide; sharing an origin means nothing.
+    seen, doubles = {}, []
     for obj in subjects:
-        key = (tuple(round(v, 3) for v in obj.matrix_world.translation), tuple(round(v, 3) for v in obj.dimensions))
+        lo_b, hi_b = boxes[obj.name]
+        key = (tuple(round(v, 3) for v in (lo_b + hi_b) / 2), tuple(round(v, 3) for v in hi_b - lo_b))
         if key in seen:
-            problems.append(f"'{obj.name}' sits exactly on top of '{seen[key]}' (duplicate?).")
+            doubles.append(f"'{obj.name}' on '{seen[key]}'")
         seen[key] = obj.name
+    if doubles:
+        problems.append(f"Exact duplicates in the same place: {', '.join(doubles[:6])}"
+                        f"{' and others' if len(doubles) > 6 else ''}.")
 
     bare = [o.name for o in subjects if hasattr(o.data, "materials") and not any(m for m in o.data.materials)]
     if bare:

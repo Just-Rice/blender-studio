@@ -100,7 +100,8 @@ across 13 pairs. A blind judge preferred the Blender Studio picture in 8 and the
 average scores of 5.6 and 4.9 out of 10. Nearly all of that gap comes from the weakest model tested, Claude
 Haiku 4.5, which went from 1.5 to 4.0. The stronger the model, the less the tools helped, and Claude Opus 5.5
 did better without them. The tools also cost more tokens, because 43 tool descriptions travel with every
-request. The pictures are on [the project page](https://just-rice.github.io/blender-studio/#compare) and
+request. After that result the tools were fixed (framing, staging, a less restrictive guide) and Opus re-run:
+it then scored 8.3 with the tools against 7.2 without, on one attempt per request. The pictures are on [the project page](https://just-rice.github.io/blender-studio/#compare) and
 the full numbers and limits are in [bench/RESULTS.md](bench/RESULTS.md).
 
 ## Options

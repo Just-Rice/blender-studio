@@ -13,7 +13,7 @@ LOOKS = {
                         about="Bright, gentle and airy."),
     "moody": dict(contrast="Very High Contrast", exposure=-0.5, bloom=0.25,
                   about="Dark and dramatic."),
-    "vivid": dict(contrast="Punchy", exposure=0.1, bloom=0.2,
+    "vivid": dict(contrast="Punchy", exposure=0.0, bloom=0.2,
                   about="Saturated and energetic. Toys, games, neon."),
     "flat_graphic": dict(transform="Standard", contrast=None, exposure=0.0, bloom=0.0,
                          about="Colours appear exactly as chosen. Icons, isometric and low-poly art."),

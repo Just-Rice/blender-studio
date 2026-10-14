@@ -1,5 +1,30 @@
 # Benchmark: plain Blender versus Blender Studio
 
+## Update, 13 October 2026: fixes after the Opus result, and an Opus re-run
+
+Opus 5.5 scored lower with the tools (6.8) than without (7.7). Reading its recorded runs and the judge's
+comments pointed to: framing measured from bounding boxes (small subject, dead space); ceramic and glossy
+presets that were too mirror-like; a backdrop lit as brightly as the subject; a design guide that pushed
+few shapes, few materials and muted colours; false "duplicate" alarms from the scene check; and materials
+that had to be set one call at a time. All were changed, and tool descriptions were cut by 27%.
+
+Opus was then run again with the fixed tools on the same three requests and judged against its original
+plain-Blender pictures:
+
+| Task | Plain (first / second judging) | Tools before | Tools after |
+| --- | --- | --- | --- |
+| Ceramic mug product shot | 7.5 / 7.0 | 6.0 | 8.0 |
+| Low-poly campsite at dusk | 7.5 / 7.0 | 7.5 | 9.0 |
+| Toy robot waving | 8.0 / 7.5 | 7.0 | 8.0 |
+| Average | 7.7 / 7.2 | 6.8 | 8.3 |
+
+- Judged better with the tools in 3 of 3 pairs. Tokens read fell from 583k to 291k (plain: 152k); cost
+  $1.00 against $1.11 before (plain: $0.94).
+- One attempt per request. The same plain pictures scored 0.5 lower on the second judging, which is the
+  size of the noise. On the campsite the re-run used no staging tools at all, only `run_python`.
+- Other models have not been re-run with the fixed tools; the tables below show them with the tools as
+  they were. `bench/replay.py` replays a recorded run against the current tools for free.
+
 **All 13 pairs together** (Haiku 4.5, Haiku 5.5, Sonnet 5.5, Opus 5.5, Gemini 3.6 Flash): Blender Studio
 judged better in 8, plain Blender in 3, 2 ties; average 5.6 against 4.9 out of 10. Without Haiku 4.5 the
 other ten pairs average 6.0 against 5.9.

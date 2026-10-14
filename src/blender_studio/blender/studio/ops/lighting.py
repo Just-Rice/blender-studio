@@ -114,19 +114,23 @@ def _light(name, kind, center, radius, azimuth, elevation, distance, power, colo
     return obj
 
 
-def _rig(style, center, radius, s):
-    """Build the lights for a style. s is the overall strength multiplier."""
+CONTRAST = {"soft": 1.6, "medium": 0.65, "strong": 0.25}
+
+
+def _rig(style, center, radius, s, f=1.0):
+    """Build the lights for a style. s scales everything; f scales only the fill and ambient light,
+    which is what decides how deep the shadows are."""
     L = lambda *a, **k: _light(*a[:2], center, radius, *a[2:], **k)
     if style == "three_point":
-        world_color((0.05, 0.055, 0.065), 1.0)
-        L("Key", "AREA", 40, 38, 3.2, 380 * s, color=(1.0, 0.95, 0.88), size=1.6)
-        L("Fill", "AREA", -55, 15, 3.4, 95 * s, color=(0.85, 0.92, 1.0), size=3.0)
+        world_color((0.05, 0.055, 0.065), f)
+        L("Key", "AREA", 40, 38, 3.2, 400 * s, color=(1.0, 0.95, 0.88), size=1.6)
+        L("Fill", "AREA", -55, 15, 3.4, 95 * s * f, color=(0.85, 0.92, 1.0), size=3.0)
         L("Rim", "AREA", 160, 40, 3.2, 440 * s, color=(1.0, 0.98, 0.95), size=1.2)
     elif style == "softbox":
-        world_color((0.72, 0.74, 0.78), 0.25 * s)
+        world_color((0.72, 0.74, 0.78), 0.25 * s * f)
         L("Top Softbox", "AREA", 10, 78, 3.0, 400 * s, size=4.0)
-        L("Left Strip", "AREA", -75, 18, 3.4, 140 * s, color=(0.94, 0.97, 1.0), size=2.4)
-        L("Right Strip", "AREA", 70, 22, 3.4, 190 * s, color=(1.0, 0.97, 0.93), size=2.4)
+        L("Left Strip", "AREA", -75, 18, 3.4, 140 * s * f, color=(0.94, 0.97, 1.0), size=2.4)
+        L("Right Strip", "AREA", 70, 22, 3.4, 210 * s, color=(1.0, 0.97, 0.93), size=2.4)
     elif style == "golden_hour":
         world_sky(elevation_deg=9, rotation_deg=50, strength=0.2 * s)
         L("Sun", "SUN", -52, 14, 6, 8.0 * s, color=(1.0, 0.62, 0.32), size=2.5)
@@ -160,10 +164,13 @@ def _reflection_probe(hi, center, radius):
 
 
 @command()
-def studio_lighting(style="three_point", strength=1.0, subjects=None, hdri=None, hdri_rotation_deg=0.0):
+def studio_lighting(style="three_point", strength=1.0, subjects=None, hdri=None, hdri_rotation_deg=0.0,
+                    contrast="medium"):
     style = style.lower()
     if style not in STYLES:
         raise ValueError(f"Unknown style '{style}'. Choose from: {', '.join(STYLES)}")
+    if contrast not in CONTRAST:
+        raise ValueError(f"Unknown contrast '{contrast}'. Choose from: {', '.join(CONTRAST)}")
     _, hi, center, radius = util.bounds(util.require_subjects(subjects))
     util.clear_collection(util.LIGHTS)
     _reflection_probe(hi, center, radius)
@@ -175,7 +182,7 @@ def studio_lighting(style="three_point", strength=1.0, subjects=None, hdri=None,
         _light("Kicker", "AREA", center, radius, 150, 40, 3.2, 350 * strength, size=1.2)
         notes.append(f"Lit by Poly Haven HDRI '{hdri}'.")
     else:
-        _rig(style, center, radius, strength)
+        _rig(style, center, radius, strength, CONTRAST[contrast])
     lights = [o.name for o in util.ensure_collection(util.LIGHTS).objects if o.type == "LIGHT"]
     return {"style": style, "lights": lights, "aimed_at": util.rounded(center), "notes": notes,
             "tip": "Call render_preview to see the result; adjust strength if it is too dark or blown out."}
@@ -213,8 +220,35 @@ def _floor(lo, center, radius):
     return obj
 
 
+def _falloff(material, shader, radius, gradient):
+    """Darken the backdrop as it recedes and rises behind the subject, the way a real studio sweep falls
+    off away from the lights. Without it the wall is as bright as the floor and the picture goes flat.
+    Done by fading towards black after the surface shader, so the backdrop's colour stays freely editable."""
+    tree = material.node_tree
+    output = next(n for n in tree.nodes if n.type == "OUTPUT_MATERIAL")
+    coords = tree.nodes.new("ShaderNodeTexCoord")
+    split = tree.nodes.new("ShaderNodeSeparateXYZ")
+    add = tree.nodes.new("ShaderNodeMath")
+    ramp = tree.nodes.new("ShaderNodeMapRange")
+    black = tree.nodes.new("ShaderNodeBsdfDiffuse")
+    mix = tree.nodes.new("ShaderNodeMixShader")
+    black.inputs["Color"].default_value = (0, 0, 0, 1)
+    ramp.inputs["From Min"].default_value = 1.5 * radius
+    ramp.inputs["From Max"].default_value = 9.0 * radius
+    ramp.inputs["To Min"].default_value = 0.0
+    ramp.inputs["To Max"].default_value = 0.75 * gradient
+    tree.links.new(coords.outputs["Object"], split.inputs[0])
+    tree.links.new(split.outputs[1], add.inputs[0])
+    tree.links.new(split.outputs[2], add.inputs[1])
+    tree.links.new(add.outputs[0], ramp.inputs["Value"])
+    tree.links.new(ramp.outputs[0], mix.inputs[0])
+    tree.links.new(shader.outputs[0], mix.inputs[1])
+    tree.links.new(black.outputs[0], mix.inputs[2])
+    tree.links.new(mix.outputs[0], output.inputs["Surface"])
+
+
 @command()
-def add_backdrop(style="cyclorama", color="#d9d9de", roughness=0.6, subjects=None):
+def add_backdrop(style="cyclorama", color="#d9d9de", roughness=0.6, subjects=None, gradient=0.5):
     """Give the subject something to stand on and cast shadows onto."""
     style = style.lower()
     if style not in BACKDROPS:
@@ -229,6 +263,8 @@ def add_backdrop(style="cyclorama", color="#d9d9de", roughness=0.6, subjects=Non
     shader = material.node_tree.nodes.get("Principled BSDF")
     shader.inputs["Base Color"].default_value = util.rgba(color)
     shader.inputs["Roughness"].default_value = roughness
+    if style == "cyclorama" and gradient:
+        _falloff(material, shader, radius, min(max(float(gradient), 0.0), 1.0))
     obj.data.materials.append(material)
     util.link_only(obj, util.BACKDROP)
     return {"backdrop": style, "floor_height": round(lo.z, 3),

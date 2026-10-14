@@ -1,6 +1,8 @@
 # Blender Studio design guide
 
-Good 3D pictures come from craft choices, not from complicated models. Follow these.
+Tips, not rules. They are a safe starting point; where your own judgement would give a better picture,
+follow that instead. The staging tools are optional too: custom lights, shapes and materials built in
+`run_python` are welcome.
 
 ## The loop
 - Build, then `scene_check`, then `render_preview`, then look hard at the picture and name what is wrong.
@@ -15,7 +17,9 @@ Good 3D pictures come from craft choices, not from complicated models. Follow th
 - Get proportions right before anything else. Pick a real size in metres and keep to it
   (a mug is 0.1 m tall, a chair seat is 0.45 m high, a person is 1.7 m).
 - Build objects sitting on Z = 0. Parts must overlap slightly where they join, never just touch.
-- Fewer, better shapes beat many rough ones. Vary size: one large, a few medium, some small.
+- Detail sells the subject. Give characters real hands, faces and joints; give products seams, rims,
+  buttons and labels. A well-observed subject beats a tidy but generic one.
+- A small touch of storytelling helps: a prop, a gesture, a sign of motion.
 
 ## Organic shapes
 - Nature is never a perfect primitive. Use `create_rock` and `create_terrain` for ground and stone,
@@ -44,19 +48,20 @@ Good 3D pictures come from craft choices, not from complicated models. Follow th
   floor or passes through something else.
 
 ## Materials
-- Use at most three materials in a scene, and make them contrast: one matte, one glossy or metallic.
+- Make materials contrast: matte against glossy or metallic. Use as many as the subject needs.
 - Roughness variety is what makes a render look real. All-glossy and all-matte both look fake.
-- Keep colours slightly off pure. Never `#ff0000` or `#ffffff`; try `#d6332b` and `#f2efe9`.
+- Commit to colour. Rich, saturated colours and a backdrop with real depth of tone read better than
+  pale pastels on a pale backdrop. Avoid only the pure extremes like `#ff0000` and `#ffffff`.
 - Pick a palette before you start: one dominant colour (about 60%), one secondary (30%), one accent (10%).
-  The backdrop is usually the dominant colour, so choose it to flatter the subject: a muted tint of the
-  subject's complementary colour, or a soft neutral.
+  The backdrop is usually the dominant colour: pick one that contrasts with the subject in both hue and
+  brightness, so the subject separates from it.
 - Glass and chrome only look good with something to reflect: use `studio_lighting(style="hdri")`.
 
 ## Lighting
 - `softbox` for clean product shots, `three_point` for characters and general subjects,
   `golden_hour` for outdoor warmth, `dramatic` or `neon` for mood, `hdri` for realism and reflections.
-- Shadows give shape. If the picture looks flat, the light is too even: try `dramatic`, or lower strength
-  and raise contrast with `set_look`.
+- Shadows give shape. If the picture looks flat or washed out, use `contrast="strong"` in
+  `studio_lighting`, lower `strength`, or darken the backdrop.
 - Always have a ground (`add_backdrop`). A subject with no shadow looks pasted on.
 - Dark backdrop with a rim light separates a dark subject; light backdrop suits a colourful one.
 
@@ -66,7 +71,8 @@ Good 3D pictures come from craft choices, not from complicated models. Follow th
 - Leave breathing room: the default fill of 0.78 is right for most shots; do not crop the subject by accident.
 - A little `depth_of_field` (f/2.8 to f/5.6) on close subjects reads as photographic. Skip it for
   isometric and diagram styles.
-- Match aspect to purpose: 1:1 or 4:5 for icons and social posts, 16:9 for banners, 9:16 for phones.
+- Match the frame to the subject: wide subjects want a landscape frame, tall ones a portrait frame.
+  Fill it. Dead space around a small subject is the most common fault.
 
 ## Look
 - `product_clean` when in doubt. `vivid` for playful, `cinematic` or `moody` for atmosphere,

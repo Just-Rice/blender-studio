@@ -6,12 +6,12 @@ from ..commands import command
 
 # Each preset: default colour, Principled inputs, and an optional procedural detail pass.
 PRESETS = {
-    "plastic_glossy": dict(color="#d6332b", inputs={"Roughness": 0.18, "Coat Weight": 0.4, "Coat Roughness": 0.05}),
+    "plastic_glossy": dict(color="#d6332b", inputs={"Roughness": 0.2, "Coat Weight": 0.4, "Coat Roughness": 0.1}),
     "plastic_matte": dict(color="#3c6fd1", inputs={"Roughness": 0.55}),
     "rubber": dict(color="#1c1c1e", inputs={"Roughness": 0.85, "Specular IOR Level": 0.3}, detail="fine_bump"),
     "clay": dict(color="#c9b8a6", inputs={"Roughness": 0.9, "Sheen Weight": 0.25, "Sheen Roughness": 0.6}),
-    "ceramic": dict(color="#f2efe9", inputs={"Roughness": 0.28, "Coat Weight": 1.0, "Coat Roughness": 0.03}),
-    "porcelain": dict(color="#fbfaf7", inputs={"Roughness": 0.2, "Coat Weight": 1.0, "Coat Roughness": 0.02,
+    "ceramic": dict(color="#f2efe9", inputs={"Roughness": 0.3, "Coat Weight": 0.6, "Coat Roughness": 0.14}),
+    "porcelain": dict(color="#fbfaf7", inputs={"Roughness": 0.22, "Coat Weight": 0.7, "Coat Roughness": 0.1,
                                                "Subsurface Weight": 0.25, "Subsurface Scale": 0.02}),
     "steel": dict(color="#b9bcc0", inputs={"Metallic": 1.0, "Roughness": 0.32}, detail="brushed"),
     "chrome": dict(color="#f0f0f0", inputs={"Metallic": 1.0, "Roughness": 0.04}),

@@ -100,6 +100,25 @@ def bbox_corners(objs):
     return [obj.matrix_world @ Vector(c) for obj in objs for c in obj.bound_box]
 
 
+def shape_points(objs, cap=3000):
+    """World-space points on the real surface of objs (bounding-box corners for anything that is not a mesh).
+    Framing from these is much tighter than from boxes, whose corners stick out far beyond round shapes."""
+    bpy.context.view_layer.update()
+    depsgraph = bpy.context.evaluated_depsgraph_get()
+    points = []
+    share = max(cap // max(len(objs), 1), 60)
+    for obj in objs:
+        if obj.type != "MESH":
+            points += [obj.matrix_world @ Vector(c) for c in obj.bound_box]
+            continue
+        evaluated = obj.evaluated_get(depsgraph)
+        mesh = evaluated.to_mesh()
+        step = max(1, len(mesh.vertices) // share)
+        points += [evaluated.matrix_world @ mesh.vertices[i].co for i in range(0, len(mesh.vertices), step)]
+        evaluated.to_mesh_clear()
+    return points or bbox_corners(objs)
+
+
 def enable_nodes(datablock):
     # use_nodes is always on from Blender 5 and slated for removal in 6.
     with warnings.catch_warnings():

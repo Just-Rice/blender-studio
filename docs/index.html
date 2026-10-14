@@ -147,6 +147,11 @@ footer { border-top: 1px solid var(--line); padding-block: 34px 60px; font-size:
   section { padding-block: 44px; }
 }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+.trio { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.trio .show { aspect-ratio: 4 / 5; }
+.trio .show img { width: 100%; height: 100%; object-fit: contain; }
+@media (max-width: 640px) { .trio { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
@@ -277,6 +282,39 @@ footer { border-top: 1px solid var(--line); padding-block: 34px 60px; font-size:
 <article class='card'><h3>Gemini 3.6 Flash <span>Ceramic mug product shot</span></h3><div class='sides'><div class='side'><h4><i class='dot plain'></i>Plain Blender</h4><div class='show' data-frames='bench/gemini-3-6-flash__mug-plain-01.jpg'><img src='bench/gemini-3-6-flash__mug-plain-01.jpg' loading='lazy' alt='Plain Blender renders for Ceramic mug product shot by Gemini 3.6 Flash, from first to final'><span class='count'>Render 1 of 1</span></div><ul><li>Judge: 3.5 / 10</li><li>487 s total, 223 s on the model</li><li>34k tokens written, 180k read</li><li>9 tool calls, 5 failed</li><li class='warn'>Did not finish: it used all 9 turns</li></ul></div><div class='side won'><h4><i class='dot studio'></i>Blender Studio<em>judged better</em></h4><div class='show' data-frames='bench/gemini-3-6-flash__mug-studio-01.jpg,bench/gemini-3-6-flash__mug-studio-02.jpg'><img src='bench/gemini-3-6-flash__mug-studio-02.jpg' loading='lazy' alt='Blender Studio renders for Ceramic mug product shot by Gemini 3.6 Flash, from first to final'><span class='count'>Render 2 of 2</span></div><ul><li>Judge: 4.0 / 10</li><li>116 s total, 105 s on the model</li><li>5k tokens written, 76k read</li><li>28 tool calls, 6 failed</li><li class='warn'>Did not finish: daily allowance for gemini-3.6-flash used up</li></ul></div></div><p class='reason'>Judge: “The second shows the whole mug and saucer legibly despite a floating saucer, a broken spoon piercing the handle and flat washed-out lighting, whereas the first has softer, nicer materials but is cropped so tightly that the mug&#x27;s rim and top are cut off and it fails as a product shot.”</p></article>
       </div>
       <p class="note">Full numbers and method are in <a href="https://github.com/Just-Rice/blender-studio/blob/main/bench/RESULTS.md">the repository</a>.</p>
+    </div>
+  </section>
+
+  <section id="fixes">
+    <div class="stack">
+      <p class="eyebrow">After the comparison</p>
+      <h2>Fixing what held Opus back.</h2>
+      <p>Opus 5.5 did worse with the tools than without, so I went through its recorded runs and the judge's comments to find out why, fixed what I found, and ran Opus again on the same three requests.</p>
+      <ul class="plain">
+        <li><b>Loose framing.</b> The camera measured a box around the subject, so round things came out small with dead space. It now measures the real shape.</li>
+        <li><b>Flat, washed-out staging.</b> Glossy surfaces were too mirror-like and the backdrop was lit as brightly as the subject. Surfaces are softer, the backdrop now darkens as it recedes, and lighting has a contrast setting.</li>
+        <li><b>A guide that held it back.</b> The design guide told the model to use few shapes, few materials and muted colours. It is now a set of tips that encourages detail and the model's own lights where those look better.</li>
+        <li><b>Wasted effort.</b> A scene check raised false alarms, and materials had to be set one call at a time. Both are fixed, and the tool descriptions are 27% shorter.</li>
+      </ul>
+      <p><b>The result:</b> with the fixed tools Opus was judged better in all three pairs, averaging 8.3 against 7.2 for its plain-Blender pictures. Before the fixes it averaged 6.8 against 7.7. It also read half as many tokens as before (291k against 583k) and cost $1.00 against $1.11, close to the $0.94 of plain Blender.</p>
+      <div class="cards"><article class='card'><h3>Claude Opus 5.5 <span>Ceramic mug product shot</span></h3><div class='trio'>
+<div class='side'><h4><i class='dot plain'></i>Plain Blender</h4><div class='show'><img src='bench/fix-mug-plain.jpg' loading='lazy' alt='Opus plain Blender picture for Ceramic mug product shot'></div><ul><li>Judge: 7.5 first time, 7.0 second time</li></ul></div>
+<div class='side'><h4><i class='dot studio'></i>Tools, before the fixes</h4><div class='show'><img src='bench/fix-mug-before.jpg' loading='lazy' alt='Opus Blender Studio picture for Ceramic mug product shot before the fixes'></div><ul><li>Judge: 6.0</li></ul></div>
+<div class='side'><h4><i class='dot studio'></i>Tools, after the fixes<em>judged better</em></h4><div class='show'><img src='bench/fix-mug-after.jpg' loading='lazy' alt='Opus Blender Studio picture for Ceramic mug product shot after the fixes'></div><ul><li>Judge: 8.0</li></ul></div>
+</div></article><article class='card'><h3>Claude Opus 5.5 <span>Low-poly campsite at dusk</span></h3><div class='trio'>
+<div class='side'><h4><i class='dot plain'></i>Plain Blender</h4><div class='show'><img src='bench/fix-camp-plain.jpg' loading='lazy' alt='Opus plain Blender picture for Low-poly campsite at dusk'></div><ul><li>Judge: 7.5 first time, 7.0 second time</li></ul></div>
+<div class='side'><h4><i class='dot studio'></i>Tools, before the fixes</h4><div class='show'><img src='bench/fix-camp-before.jpg' loading='lazy' alt='Opus Blender Studio picture for Low-poly campsite at dusk before the fixes'></div><ul><li>Judge: 7.5</li></ul></div>
+<div class='side'><h4><i class='dot studio'></i>Tools, after the fixes<em>judged better</em></h4><div class='show'><img src='bench/fix-camp-after.jpg' loading='lazy' alt='Opus Blender Studio picture for Low-poly campsite at dusk after the fixes'></div><ul><li>Judge: 9.0</li></ul></div>
+</div></article><article class='card'><h3>Claude Opus 5.5 <span>Toy robot waving</span></h3><div class='trio'>
+<div class='side'><h4><i class='dot plain'></i>Plain Blender</h4><div class='show'><img src='bench/fix-robot-plain.jpg' loading='lazy' alt='Opus plain Blender picture for Toy robot waving'></div><ul><li>Judge: 8.0 first time, 7.5 second time</li></ul></div>
+<div class='side'><h4><i class='dot studio'></i>Tools, before the fixes</h4><div class='show'><img src='bench/fix-robot-before.jpg' loading='lazy' alt='Opus Blender Studio picture for Toy robot waving before the fixes'></div><ul><li>Judge: 7.0</li></ul></div>
+<div class='side'><h4><i class='dot studio'></i>Tools, after the fixes<em>judged better</em></h4><div class='show'><img src='bench/fix-robot-after.jpg' loading='lazy' alt='Opus Blender Studio picture for Toy robot waving after the fixes'></div><ul><li>Judge: 8.0</li></ul></div>
+</div></article></div>
+      <ul class="plain">
+        <li>This is one more attempt per request, so it is encouraging rather than proof. The judge scored the same plain pictures half a point lower the second time, which shows how much one look can vary.</li>
+        <li>On the campsite, Opus used none of the staging tools after the fixes and built everything in code. That win reflects the looser guidance, not the lighting or camera tools.</li>
+        <li>Only Opus was run again. The table above still shows every model with the tools as they were.</li>
+      </ul>
     </div>
   </section>
 

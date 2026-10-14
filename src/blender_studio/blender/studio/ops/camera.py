@@ -96,7 +96,7 @@ def frame_camera(shot="three_quarter", subjects=None, focal_length=None, azimuth
     az = spec["az"] if azimuth_deg is None else azimuth_deg
     el = spec["el"] if elevation_deg is None else elevation_deg
     fill = fill or spec.get("fill", 0.78)
-    distance, target = frame(cam, util.bbox_corners(targets), center, direction(az, el), fill)
+    distance, target = frame(cam, util.shape_points(targets), center, direction(az, el), fill)
 
     dof = cam.data.dof
     dof.use_dof = bool(depth_of_field)

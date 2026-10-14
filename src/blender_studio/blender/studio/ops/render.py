@@ -109,7 +109,7 @@ def contact_sheet(subjects=None):
     scene = bpy.context.scene
     targets = util.require_subjects(subjects)
     _, _, center, _ = util.bounds(targets)
-    corners = util.bbox_corners(targets)
+    corners = util.shape_points(targets)
     saved = (scene.camera, scene.render.engine, scene.render.resolution_x, scene.render.resolution_y,
              scene.render.film_transparent)
     cam = make_camera("Studio Sheet Camera")

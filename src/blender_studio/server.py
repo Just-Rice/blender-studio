@@ -26,7 +26,10 @@ Beyond basic shapes there are tools for organic forms (create_rock, create_terra
 sculpt, boolean), people (create_character, create_human, pose_character), and motion (animate,
 animate_character, drop_objects, drape_cloth, render_animation for video).
 
-Never finish without looking at a render. Call design_guide once before your first scene for the craft rules.
+The staging tools are a fast route to a solid result, not a rulebook: if your own lights, shapes or
+materials in run_python would look better, use them. Spend your effort on the subject's detail.
+
+Never finish without looking at a render. design_guide has optional craft tips.
 Units are metres, Z is up, the front of the scene faces -Y. Every change can be reversed with undo."""
 
 Names = Optional[Union[str, list[str]]]
@@ -147,18 +150,27 @@ def undo(steps: int = 1) -> dict:
 
 @mcp.tool()
 def apply_material(
-    objects: Union[str, list[str]],
-    preset: str,
+    objects: Names = None,
+    preset: Optional[str] = None,
     color: Color = None,
     roughness: Optional[float] = None,
     metallic: Optional[float] = None,
     emission_strength: Optional[float] = None,
+    assignments: Optional[list[dict]] = None,
 ) -> dict:
-    """Give objects a realistic surface. Presets include plastic_glossy, plastic_matte, rubber, clay, ceramic,
-    porcelain, steel, chrome, gold, copper, aluminium, car_paint, glass, frosted_glass, water, wood, fabric,
-    velvet, concrete, stone, skin, wax, glow, neon_tube. color is '#rrggbb'; leave it out for the natural colour."""
-    return call("apply_material", objects=objects, preset=preset, color=color, roughness=roughness,
-                metallic=metallic, emission_strength=emission_strength)
+    """Give objects a realistic surface from a preset (see list_presets: ceramic, plastic_glossy, gold, glass,
+    wood, fabric, glow and more). color is '#rrggbb'; leave it out for the natural colour.
+    To set many at once, pass assignments=[{"objects": [...], "preset": "...", "color": "..."}, ...]
+    instead; each entry takes the same fields."""
+    jobs = assignments or [dict(objects=objects, preset=preset, color=color, roughness=roughness,
+                                metallic=metallic, emission_strength=emission_strength)]
+    done = []
+    for job in jobs:
+        if not job.get("objects") or not job.get("preset"):
+            raise ValueError("Each material needs both 'objects' and 'preset'.")
+        done.append(call("apply_material", **{k: job.get(k) for k in (
+            "objects", "preset", "color", "roughness", "metallic", "emission_strength")}))
+    return done[0] if len(done) == 1 else {"applied": done}
 
 
 @mcp.tool()
@@ -181,24 +193,28 @@ def add_backdrop(
     style: Literal["cyclorama", "floor", "none"] = "cyclorama",
     color: Color = "#d9d9de",
     roughness: float = 0.6,
+    gradient: float = 0.5,
 ) -> dict:
-    """Put the subject on a surface so it has a shadow and a horizon. 'cyclorama' is a seamless photo-studio
-    sweep (floor curving up into a wall); 'floor' is a wide flat ground. It is placed under the lowest object."""
-    return call("add_backdrop", style=style, color=color, roughness=roughness)
+    """Put the subject on a surface so it has a shadow and a horizon. 'cyclorama' is a seamless studio sweep
+    (floor curving up into a wall); 'floor' is a wide flat ground. gradient 0-1 darkens the wall as it
+    recedes, which adds depth; 0 keeps it evenly lit."""
+    return call("add_backdrop", style=style, color=color, roughness=roughness, gradient=gradient)
 
 
 @mcp.tool()
 def studio_lighting(
     style: Literal["three_point", "softbox", "golden_hour", "overcast", "dramatic", "neon", "hdri"] = "three_point",
     strength: float = 1.0,
+    contrast: Literal["soft", "medium", "strong"] = "medium",
     subjects: Names = None,
     hdri: Optional[str] = None,
     hdri_rotation_deg: float = 0.0,
 ) -> dict:
-    """Replace all lighting with a complete rig sized and aimed at the subject. strength scales brightness
-    (0.5 dimmer, 2 brighter). For style='hdri', pass a Poly Haven HDRI id from search_assets (default is a studio)."""
+    """Replace all lighting with a rig sized and aimed at the subject. strength scales brightness;
+    contrast sets how deep the shadows are. For 'hdri' pass a Poly Haven id from search_assets.
+    Optional: lights you build yourself in run_python work just as well."""
     return call("studio_lighting", style=style, strength=strength, subjects=subjects, hdri=hdri,
-                hdri_rotation_deg=hdri_rotation_deg)
+                hdri_rotation_deg=hdri_rotation_deg, contrast=contrast)
 
 
 @mcp.tool()
@@ -213,10 +229,9 @@ def frame_camera(
     depth_of_field: Optional[float] = None,
     aspect: Optional[Literal["16:9", "3:2", "4:3", "1:1", "4:5", "9:16", "21:9"]] = None,
 ) -> dict:
-    """Place the camera so the subject is centred and fills the frame. Override the angle with azimuth_deg
-    (0 front, 90 right side, 180 back) and elevation_deg (0 eye level, 90 overhead). fill is how much of the
-    frame the subject takes (default 0.78). depth_of_field is an f-stop: 1.8 blurs the background strongly,
-    8 slightly; leave empty for everything sharp. subjects limits framing to named objects."""
+    """Place the camera so the subject is centred and fills the frame. azimuth_deg: 0 front, 90 right,
+    180 back. elevation_deg: 0 eye level, 90 overhead. fill is the share of the frame the subject takes
+    (default 0.78). depth_of_field is an f-stop (1.8 strong blur, 8 slight). subjects limits framing."""
     return call("frame_camera", shot=shot, subjects=subjects, focal_length=focal_length, azimuth_deg=azimuth_deg,
                 elevation_deg=elevation_deg, fill=fill, depth_of_field=depth_of_field, aspect=aspect)
 
@@ -408,12 +423,10 @@ def create_character(
     facing_deg: float = 0.0,
     pose: str = "stand",
 ) -> dict:
-    """Add a stylised person with working joints. 'toy' is a rounded vinyl figure with a big head, 'lowpoly'
-    is faceted with natural proportions, 'blocky' is a voxel-game figure. Colours are '#rrggbb'; hair "none"
-    is bald. The feet stand on `location`. facing_deg 0 faces the front, 90 faces right, 180 faces away.
-    Poses: stand, t_pose, wave, cheer, walk, run, sit, point, hands_on_hips, think, jump.
-    Use the character's name with transform_object, frame_camera or apply_material to affect all of it;
-    individual parts are named like 'Name Torso' or 'Name Hair'."""
+    """Add a stylised person with working joints: 'toy' (rounded, big head), 'lowpoly' (faceted) or 'blocky'
+    (voxel). Feet stand on `location`; facing_deg 0 faces front. hair "none" is bald. Poses: stand, t_pose,
+    wave, cheer, walk, run, sit, point, hands_on_hips, think, jump. The name works with transform_object,
+    frame_camera and apply_material; parts are named like 'Name Torso'."""
     return call("create_character", name=name, style=style, height=height, skin=skin, top=top, bottom=bottom,
                 shoes=shoes, hair=hair or "none", location=location, facing_deg=facing_deg, pose=pose)
 
@@ -435,11 +448,9 @@ def create_human(
     facing_deg: float = 0.0,
     pose: str = "stand",
 ) -> dict:
-    """Add a realistically proportioned adult human body, made with the free MPFB (MakeHuman) add-on, which
-    is downloaded and installed into Blender the first time this is used. muscle and weight run 0-1.
-    The outfit is painted on (short-sleeved top, trousers, shoes, cropped hair), so it reads as a clothed
-    person at medium distance but not in close-up. Takes the same poses and motion clips as create_character.
-    For stylised scenes prefer create_character."""
+    """Add a realistically proportioned adult body via the free MPFB add-on (installed into Blender on
+    first use). muscle and weight run 0-1. The outfit is painted on, so keep it at medium distance.
+    Same poses and clips as create_character."""
     return call("create_human", name=name, gender=gender, age=age, muscle=muscle, weight=weight, height=height,
                 skin=skin, top=top, bottom=bottom, shoes=shoes, hair=hair or "none", location=location,
                 facing_deg=facing_deg, pose=pose)
@@ -451,10 +462,10 @@ def pose_character(
     pose: Optional[str] = None,
     bones: Optional[dict[str, list[float]]] = None,
 ) -> dict:
-    """Pose a figure for a still picture. pose is a preset (see create_character). bones fine-tunes or poses
-    any rig by hand as {bone: [bend_forward, twist, raise_sideways]} in degrees; figures made here have
-    hips, spine, head, and upper_arm, forearm, thigh, shin each ending in .L or .R. For a sideways raise,
-    left limbs use positive angles and right limbs negative. Posing removes any animation on the figure."""
+    """Pose a figure. pose is a preset (see create_character). bones sets joints by hand as
+    {bone: [bend_forward, twist, raise_sideways]} degrees; figures made here have hips, spine, head, and
+    upper_arm, forearm, thigh, shin ending in .L or .R (sideways raise: left positive, right negative).
+    Posing removes animation."""
     return call("pose_character", character=character, pose=pose, bones=bones)
 
 
@@ -592,6 +603,27 @@ def open_in_blender() -> dict:
     except (BlenderError, OSError) as exc:
         raise ValueError(str(exc)) from None
     return {"opened": saved}
+
+
+def _compact(schema):
+    """Trim what the model has to read: drop auto-generated titles and collapse "X or nothing" unions."""
+    if isinstance(schema, list):
+        return [_compact(item) for item in schema]
+    if not isinstance(schema, dict):
+        return schema
+    schema = {key: _compact(value) for key, value in schema.items() if key != "title"}
+    options = schema.get("anyOf")
+    if options:
+        real = [option for option in options if option.get("type") != "null"]
+        if len(real) < len(options):
+            schema.pop("anyOf")
+            schema.pop("default", None) if schema.get("default") is None else None
+            schema = {**(real[0] if len(real) == 1 else {"anyOf": real}), **schema}
+    return schema
+
+
+for _tool in mcp._tool_manager._tools.values():
+    _tool.parameters = _compact(_tool.parameters)
 
 
 def main():
