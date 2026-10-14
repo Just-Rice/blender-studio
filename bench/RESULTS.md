@@ -1,5 +1,9 @@
 # Benchmark: plain Blender versus Blender Studio
 
+**All 13 pairs together** (Haiku 4.5, Haiku 5.5, Sonnet 5.5, Opus 5.5, Gemini 3.6 Flash): Blender Studio
+judged better in 8, plain Blender in 3, 2 ties; average 5.6 against 4.9 out of 10. Without Haiku 4.5 the
+other ten pairs average 6.0 against 5.9.
+
 ## Update, 13 October 2026: Claude Opus 5.5 added
 
 With Haiku 5.5, Sonnet 5.5, Opus 5.5 and Gemini 3.6 Flash together (10 pairs), this is the current headline:
