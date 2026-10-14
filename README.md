@@ -1,6 +1,7 @@
 # Blender Studio MCP
 
 Lets Claude and other AI models make good-looking 3D art in [Blender](https://www.blender.org).
+Project page: https://just-rice.github.io/blender-studio/
 
 Blender can already be scripted, but an AI writing raw scripts tends to produce flat, grey
 "programmer art". Blender Studio gives the AI what a photographer has: ready-made lighting rigs,
@@ -94,11 +95,12 @@ GEMINI_API_KEY=... uv run python examples/gemini_demo.py out "a toy rocket on a 
 
 ## Does it help?
 
-A first benchmark gave the same request to the same model with plain Blender scripting and with these
-tools. A blind judge preferred the Blender Studio picture in 6 of 7 pairs. Weaker models gained most and got
-cheaper; a strong model (Claude Sonnet 5.5) gained a little and paid about 2.4 times as much, because 43
-tool descriptions travel with every request. Full numbers and limits are in
-[bench/RESULTS.md](bench/RESULTS.md).
+A benchmark gave the same request to the same model with plain Blender scripting and with these tools.
+A blind judge preferred the Blender Studio picture in 5 of 7 pairs, but with current models the gain is
+modest: the average score rose from 5.2 to 5.7 out of 10, and the tools cost more time and tokens because
+43 tool descriptions travel with every request. An older, weaker model gained much more. The pictures are
+on [the project page](https://just-rice.github.io/blender-studio/#compare) and the full numbers and
+limits are in [bench/RESULTS.md](bench/RESULTS.md).
 
 ## Options
 

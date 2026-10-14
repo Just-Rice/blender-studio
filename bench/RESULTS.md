@@ -1,5 +1,31 @@
 # Benchmark: plain Blender versus Blender Studio
 
+## Update, 13 October 2026: Claude Haiku 5.5
+
+Claude Haiku 5.5 was run on the same three requests, and replaces Haiku 4.5 in the headline comparison.
+With Haiku 5.5, Sonnet 5.5 and Gemini 3.6 Flash together:
+
+- The blind judge preferred the Blender Studio picture in 5 of 7 pairs and the plain one in 1, with 1 tie.
+  Average score rose from 5.2 to 5.7 out of 10.
+- Haiku 5.5 did about as well on its own: 5.5 with plain Blender, 5.3 with the tools. The tools won on the
+  mug and campsite; plain Blender won on the robot, 6.5 against 4.0.
+- Haiku 5.5 read 4.7 times as many tokens with the tools (972k against 208k), wrote 28% fewer, took 411 s
+  against 272 s in total, and cost $0.04 against $0.03. No tool call failed either way (0 of 21, 0 of 74).
+- The larger gain seen with Haiku 4.5 below suggests the tools matter most for weaker models.
+
+| Model | Task | Way | Judge /10 | Model time | Total time | Tokens written | Tokens read | Calls | Failed |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Claude Haiku 5.5 | Ceramic mug product shot | Plain Blender | 4.0 | 43 s | 128 s | 8k | 68k | 8 | 0 |
+| Claude Haiku 5.5 | Ceramic mug product shot | Blender Studio | 5.0 | 98 s | 177 s | 12k | 467k | 27 | 0 |
+| Claude Haiku 5.5 | Low-poly campsite at dusk | Plain Blender | 6.0 | 59 s | 70 s | 13k | 37k | 5 | 0 |
+| Claude Haiku 5.5 | Low-poly campsite at dusk | Blender Studio | 7.0 | 32 s | 87 s | 6k | 265k | 26 | 0 |
+| Claude Haiku 5.5 | Toy robot waving | Plain Blender | 6.5 | 55 s | 74 s | 11k | 102k | 8 | 0 |
+| Claude Haiku 5.5 | Toy robot waving | Blender Studio | 4.0 | 25 s | 147 s | 4k | 241k | 21 | 0 |
+
+These runs came after the `create_limbs` fix described below; the Sonnet and Gemini runs did not.
+
+## Original run, 10 October 2026
+
 Run on 10 October 2026 on one Mac with Blender 5.2. The same model was given the same one-line request
 twice: once with plain Blender (three tools: list the scene, run Python, render) and once with Blender
 Studio's 43 tools. One attempt per pair.
