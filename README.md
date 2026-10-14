@@ -95,10 +95,11 @@ GEMINI_API_KEY=... uv run python examples/gemini_demo.py out "a toy rocket on a 
 
 ## Does it help?
 
-A benchmark gave the same request to the same model with plain Blender scripting and with these tools.
-A blind judge preferred the Blender Studio picture in 5 of 7 pairs, but with current models the gain is
-modest: the average score rose from 5.2 to 5.7 out of 10, and the tools cost more time and tokens because
-43 tool descriptions travel with every request. An older, weaker model gained much more. The pictures are
+A benchmark gave the same request to the same model with plain Blender scripting and with these tools,
+across ten pairs. On quality it was close to a draw: a blind judge preferred the Blender Studio picture in
+5 pairs and the plain one in 3, with average scores of 6.0 and 5.9 out of 10. The stronger the model, the
+less the tools helped: Claude Opus 5.5 did better without them, while an older, weaker model gained a lot.
+The tools also cost more tokens, because 43 tool descriptions travel with every request. The pictures are
 on [the project page](https://just-rice.github.io/blender-studio/#compare) and the full numbers and
 limits are in [bench/RESULTS.md](bench/RESULTS.md).
 

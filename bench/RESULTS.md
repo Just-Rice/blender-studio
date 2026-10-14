@@ -1,5 +1,26 @@
 # Benchmark: plain Blender versus Blender Studio
 
+## Update, 13 October 2026: Claude Opus 5.5 added
+
+With Haiku 5.5, Sonnet 5.5, Opus 5.5 and Gemini 3.6 Flash together (10 pairs), this is the current headline:
+
+- The blind judge preferred the Blender Studio picture in 5 of 10 pairs and the plain one in 3, with 2 ties.
+  Average score: 5.9 plain, 6.0 Blender Studio. Effectively a draw on quality.
+- Opus 5.5 was better without the tools: 7.7 plain against 6.8. It won the mug and robot plain and tied on
+  the campsite. It read 3.8 times as many tokens with the tools and cost $1.11 against $0.94, but its
+  plain runs were slower (1,314 s against 512 s) because it chose heavy render settings.
+- The pattern across models: the stronger the model, the less the tools help.
+- The judge (Opus 5.5) also made the Opus pictures. It judged them blind like the rest.
+
+| Model | Task | Way | Judge /10 | Model time | Total time | Tokens written | Tokens read | Calls | Failed |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Claude Opus 5.5 | Ceramic mug product shot | Plain Blender | 7.5 | 97 s | 798 s | 10k | 47k | 6 | 0 |
+| Claude Opus 5.5 | Ceramic mug product shot | Blender Studio | 6.0 | 46 s | 137 s | 5k | 110k | 15 | 0 |
+| Claude Opus 5.5 | Low-poly campsite at dusk | Plain Blender | 7.5 | 68 s | 83 s | 7k | 39k | 7 | 0 |
+| Claude Opus 5.5 | Low-poly campsite at dusk | Blender Studio | 7.5 | 80 s | 124 s | 9k | 178k | 14 | 1 |
+| Claude Opus 5.5 | Toy robot waving | Plain Blender | 8.0 | 94 s | 434 s | 10k | 67k | 9 | 1 |
+| Claude Opus 5.5 | Toy robot waving | Blender Studio | 7.0 | 78 s | 251 s | 8k | 295k | 29 | 0 |
+
 ## Update, 13 October 2026: Claude Haiku 5.5
 
 Claude Haiku 5.5 was run on the same three requests, and replaces Haiku 4.5 in the headline comparison.
