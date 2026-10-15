@@ -1,4 +1,5 @@
 # Blender Studio MCP
+[![M8ven Score](https://m8ven.ai/badge/mcp/just-rice-blender-studio-1e240f?v=987741c8b68956abf20ef830511abe3e)](https://m8ven.ai/mcp/just-rice-blender-studio-1e240f?s=readme)
 
 Lets Claude and other AI models make good-looking 3D art in [Blender](https://www.blender.org).
 Project page: https://just-rice.github.io/blender-studio/
