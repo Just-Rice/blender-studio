@@ -1,0 +1,37 @@
+{
+ "hero": "In a blind test across four Claude models, its pictures were judged better than plain Blender's in 9 of 12 pairs.",
+ "intro": "To see whether the tools help, the same model was given the same one-line request twice: once with plain Blender, where it writes code, renders and looks at the result, and once with Blender Studio. This round covers Claude Haiku 4.5, Haiku 5.5, Sonnet 5.5 and Opus 5.5 on three requests each, with the tools as fixed after the first round. Claude Opus 5.5 judged each pair blind, under neutral file names.",
+ "short": "Blender Studio's picture was judged better in 9 of 12 pairs and plain Blender's in 3. The average score was 6.1 against 4.7 out of 10, every model averaged higher with the tools, and no tool call failed with them.",
+ "verdict": "After the fixes, Blender Studio helped every Claude model tested. A blind judge preferred its picture in 9 of 12 pairs and plain Blender's in 3, with an average score of 6.1 against 4.7 out of 10. It still costs more tokens to read, and the gain varies a lot from one request to the next.",
+ "findings": [
+  "<b>Every model averaged higher with the tools.</b> Haiku 4.5 went from 1.8 to 4.0, Haiku 5.5 from 4.8 to 6.3, Sonnet 5.5 from 4.8 to 5.7 and Opus 5.5 from 7.2 to 8.3.",
+  "<b>Opus turned round.</b> Before the fixes it scored 6.8 with the tools against 7.7 without. After them it won all three pairs.",
+  "<b>Not every request improved.</b> Plain Blender won Sonnet's and Haiku 5.5's campsites and Haiku 4.5's mug. Sonnet's campsite with the tools scored 3.5, its worst picture of the round, and is the first thing the next round looks at.",
+  "<b>No failed steps with the tools.</b> 0 of 211 tool calls failed, against 8 of 126 with plain Blender.",
+  "<b>The cost is mostly reading.</b> Haiku 5.5, Sonnet and Opus read 1.9 to 4.2 times as many tokens with the tools. In money: Opus $1.00 against $0.94, Sonnet $0.19 against $0.12, Haiku 5.5 $0.09 against $0.03. Haiku 4.5 was cheaper with the tools, $0.28 against $0.46."
+ ],
+ "caveats": [
+  "One attempt per pair and three still-life requests. The next rounds use a larger set of requests that need people, physics, organic shapes, ready-made assets, glass and video.",
+  "The judge scores the same picture differently from one day to the next: Haiku 5.5's plain pictures, reused from the first round, averaged 4.8 this time against 5.5 before. Compare tools and plain within a round, not across rounds.",
+  "Opus judged its own pictures too, blind and with no memory of making them.",
+  "Plain-Blender pictures for Haiku 5.5 and Opus 5.5 were reused from the first round, since plain Blender did not change; the other models ran both ways again.",
+  "Gemini 3.8 Flash could not be scored: its plain run spent 106 minutes in timeouts without producing a picture, which used up the free daily allowance before its tools run.",
+  "&ldquo;Plain Blender&rdquo; is this project's own three-tool stand-in, and the test was run by the person who built the tools."
+ ],
+ "method": [
+  "<b>Plain Blender</b> means three tools: list the scene, run Python inside Blender, and render the camera view. It starts from Blender's default scene. This is my own minimal stand-in for how AI models normally drive Blender, not another published package.",
+  "<b>Blender Studio</b> means the full 43-tool set, as fixed after the first round, including its own run-Python tool, starting from an empty scene.",
+  "Both ways got the same system prompt, the same request, the same turn limit and the same size of picture back. Claude models ran through the Claude command line with nothing else loaded.",
+  "The judge was Claude Opus 5.5. It saw each pair twice under neutral file names, once each way round, without knowing which picture came from which way. Where it disagreed with itself the pair counts as a tie.",
+  "&ldquo;Tokens read&rdquo; counts everything sent to the model across all its requests, including repeats it reads from cache."
+ ],
+ "fix_intro": "In the first round, Opus 5.5 scored lower with the tools than without. Its recorded runs and the judge's comments showed why, and these changes followed:",
+ "fix_list": [
+  "<b>Loose framing.</b> The camera measured a box around the subject, so round things came out small with dead space. It now measures the real shape.",
+  "<b>Flat, washed-out staging.</b> Glossy surfaces were too mirror-like and the backdrop was lit as brightly as the subject. Surfaces are softer, the backdrop darkens as it recedes, and lighting has a contrast setting.",
+  "<b>A guide that held models back.</b> The design guide pushed few shapes, few materials and muted colours. It is now a set of tips that encourages detail and the model's own lights where those look better.",
+  "<b>Wasted effort.</b> A scene check raised false alarms and materials had to be set one call at a time. Both are fixed, and the tool descriptions are 27% shorter."
+ ],
+ "fix_note": "First-round figures are from 10 and 13 October with the tools as they were. The judge's scores drift by about half a point between rounds, so compare each round's plain and tools columns with each other. Below: Opus's pictures at each stage.",
+ "card_note": "Full numbers and method, including the first round, are in <a href=\"https://github.com/Just-Rice/blender-studio/blob/main/bench/RESULTS.md\">the repository</a>."
+}

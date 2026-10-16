@@ -1,5 +1,51 @@
 # Benchmark: plain Blender versus Blender Studio
 
+## Round 2, 13 to 14 October 2026: every Claude model with the fixed tools
+
+After the fixes described below, Haiku 4.5, Haiku 5.5, Sonnet 5.5 and Opus 5.5 were run on the same three
+requests. Plain-Blender pictures for Haiku 5.5 and Opus 5.5 were reused from round 1 (plain Blender did not
+change); the other models ran both ways again. Opus 5.5 judged every pair blind.
+
+- Blender Studio judged better in 9 of 12 pairs, plain Blender in 3. Average 6.1 against 4.7 out of 10.
+- Every model averaged higher with the tools: Haiku 4.5 1.8 to 4.0, Haiku 5.5 4.8 to 6.3, Sonnet 5.5 4.8 to
+  5.7, Opus 5.5 7.2 to 8.3.
+- 0 of 211 tool calls failed with the tools, 8 of 126 with plain Blender.
+- Cost: Opus $1.00 against $0.94, Sonnet $0.19 against $0.12, Haiku 5.5 $0.09 against $0.03, Haiku 4.5
+  $0.28 against $0.46.
+- Gemini 3.8 Flash could not be scored: its plain run spent 106 minutes in timeouts without a picture and used
+  up the free daily allowance.
+- The judge's scores drift between rounds (Haiku 5.5's reused plain pictures: 5.5 in round 1, 4.8 now), so
+  compare tools and plain within a round.
+
+| Model | Task | Way | Judge /10 | Model time | Total time | Tokens written | Tokens read | Calls | Failed |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Claude Haiku 4.5 | Ceramic mug product shot | Plain Blender | 3.0 | 67 s | 100 s | 7k | 176k | 18 | 3 |
+| Claude Haiku 4.5 | Ceramic mug product shot | Blender Studio | 3.0 | 42 s | 150 s | 3k | 152k | 13 | 0 |
+| Claude Haiku 4.5 | Low-poly campsite at dusk | Plain Blender | 1.5 | 73 s | 104 s | 8k | 202k | 17 | 3 |
+| Claude Haiku 4.5 | Low-poly campsite at dusk | Blender Studio | 5.0 | 46 s | 122 s | 5k | 219k | 30 | 0 |
+| Claude Haiku 4.5 | Toy robot waving | Plain Blender | 1.0 | 171 s | 211 s | 16k | 908k | 38 | 0 |
+| Claude Haiku 4.5 | Toy robot waving | Blender Studio | 4.0 | 102 s | 243 s | 7k | 599k | 48 | 0 |
+| Claude Haiku 5.5 | Ceramic mug product shot | Plain Blender | 3.5 | 43 s | 128 s | 8k | 68k | 8 | 0 |
+| Claude Haiku 5.5 | Ceramic mug product shot | Blender Studio | 7.0 | 34 s | 110 s | 6k | 194k | 16 | 0 |
+| Claude Haiku 5.5 | Low-poly campsite at dusk | Plain Blender | 6.0 | 59 s | 70 s | 13k | 37k | 5 | 0 |
+| Claude Haiku 5.5 | Low-poly campsite at dusk | Blender Studio | 5.0 | 395 s | 459 s | 134k | 208k | 14 | 0 |
+| Claude Haiku 5.5 | Toy robot waving | Plain Blender | 5.0 | 55 s | 74 s | 11k | 102k | 8 | 0 |
+| Claude Haiku 5.5 | Toy robot waving | Blender Studio | 7.0 | 30 s | 86 s | 7k | 145k | 24 | 0 |
+| Claude Sonnet 5.5 | Ceramic mug product shot | Plain Blender | 4.0 | 11 s | 19 s | 2k | 7k | 2 | 0 |
+| Claude Sonnet 5.5 | Ceramic mug product shot | Blender Studio | 6.0 | 10 s | 24 s | 1k | 40k | 6 | 0 |
+| Claude Sonnet 5.5 | Low-poly campsite at dusk | Plain Blender | 6.0 | 10 s | 24 s | 1k | 13k | 4 | 0 |
+| Claude Sonnet 5.5 | Low-poly campsite at dusk | Blender Studio | 3.5 | 11 s | 26 s | 2k | 42k | 4 | 0 |
+| Claude Sonnet 5.5 | Toy robot waving | Plain Blender | 4.5 | 15 s | 23 s | 2k | 15k | 4 | 1 |
+| Claude Sonnet 5.5 | Toy robot waving | Blender Studio | 7.5 | 19 s | 33 s | 3k | 64k | 21 | 0 |
+| Claude Opus 5.5 | Ceramic mug product shot | Plain Blender | 7.0 | 97 s | 798 s | 10k | 47k | 6 | 0 |
+| Claude Opus 5.5 | Ceramic mug product shot | Blender Studio | 8.0 | 62 s | 199 s | 7k | 108k | 15 | 0 |
+| Claude Opus 5.5 | Low-poly campsite at dusk | Plain Blender | 7.0 | 68 s | 83 s | 7k | 39k | 7 | 0 |
+| Claude Opus 5.5 | Low-poly campsite at dusk | Blender Studio | 9.0 | 74 s | 90 s | 8k | 77k | 8 | 0 |
+| Claude Opus 5.5 | Toy robot waving | Plain Blender | 7.5 | 94 s | 434 s | 10k | 67k | 9 | 1 |
+| Claude Opus 5.5 | Toy robot waving | Blender Studio | 8.0 | 82 s | 162 s | 8k | 106k | 12 | 0 |
+
+## Round 1 and the fixes in between
+
 ## Update, 13 October 2026: fixes after the Opus result, and an Opus re-run
 
 Opus 5.5 scored lower with the tools (6.8) than without (7.7). Reading its recorded runs and the judge's
