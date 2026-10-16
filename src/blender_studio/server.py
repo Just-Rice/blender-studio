@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Literal, Optional, Union
 
 from mcp.server.fastmcp import FastMCP, Image
+from mcp.types import ToolAnnotations
 from PIL import Image as PILImage
 from PIL import ImageDraw
 
@@ -96,7 +97,7 @@ def scene_info() -> dict:
 
 @mcp.tool()
 def new_scene() -> dict:
-    """Start over with an empty scene."""
+    """Start over with an empty scene. Deletes everything in the current scene (undo can bring it back)."""
     return call("new_scene")
 
 
@@ -270,7 +271,8 @@ def _render(quality, **args):
 @mcp.tool()
 def render_preview(quality: Literal["draft", "preview"] = "preview", at_seconds: Optional[float] = None) -> list:
     """Render the camera view quickly and return the picture so you can judge it. 'draft' is half size and
-    fastest. Look closely at composition, lighting and materials, then fix and render again.
+    fastest. Look closely at composition, lighting and materials, then fix and render again. Each render is
+    also saved as a PNG in the session folder.
     at_seconds picks a moment of an animation to look at."""
     return _render(quality, at_seconds=at_seconds)
 
@@ -550,14 +552,15 @@ def clear_animation(objects: Names = None) -> dict:
 
 @mcp.tool()
 def search_assets(kind: Literal["hdri", "texture", "model"] = "hdri", query: str = "", limit: int = 15) -> dict:
-    """Search Poly Haven's free library (no account needed): 'hdri' lighting environments, photographed
+    """Search Poly Haven's free online library (no account needed; needs the internet): 'hdri' lighting environments, photographed
     'texture' surfaces, and ready-made 'model' props. Returns ids to use with the other asset tools."""
     return call("search_assets", kind=kind, query=query, limit=limit)
 
 
 @mcp.tool()
 def apply_texture(objects: Union[str, list[str]], asset_id: str, scale: float = 1.0) -> dict:
-    """Cover objects with a photographed Poly Haven texture (brick, wood planks, marble, ...).
+    """Cover objects with a photographed Poly Haven texture (brick, wood planks, marble, ...), downloading it
+    the first time it is used.
     scale above 1 makes the pattern smaller and repeat more."""
     return call("apply_texture", objects=objects, asset_id=asset_id, scale=scale)
 
@@ -569,7 +572,7 @@ def import_asset(
     fit_height: Optional[float] = None,
     location: Optional[list[float]] = None,
 ) -> dict:
-    """Add a ready-made Poly Haven model to the scene. fit_height rescales it to that many metres tall
+    """Download a ready-made Poly Haven model and add it to the scene. fit_height rescales it to that many metres tall
     and stands it on the ground."""
     return call("import_asset", asset_id=asset_id, name=name, fit_height=fit_height, location=location)
 
@@ -582,20 +585,23 @@ def import_model(path: str, name: Optional[str] = None, fit_height: Optional[flo
 
 @mcp.tool()
 def export_model(path: str, include_studio: bool = False) -> dict:
-    """Export the objects for use elsewhere. The file type follows the extension: .glb (web and games),
-    .gltf, .obj, .stl (3D printing), .fbx, .usdc. Studio lights and backdrop are left out unless asked."""
+    """Export the objects to a file at path, replacing any file already there. The file type follows the
+    extension: .glb (web and games), .gltf, .obj, .stl (3D printing), .fbx, .usdc. Studio lights and
+    backdrop are left out unless asked."""
     return call("export_model", path=path, include_studio=include_studio)
 
 
 @mcp.tool()
 def save_blend(path: Optional[str] = None) -> dict:
-    """Save the whole scene as a .blend file that opens in Blender."""
+    """Save the whole scene as a .blend file that opens in Blender. Writes to path (or the session folder),
+    replacing any file already there."""
     return call("save_blend", path=path)
 
 
 @mcp.tool()
 def open_in_blender() -> dict:
-    """Save the scene and open it in the Blender app so the person can look around and edit it by hand."""
+    """Save the scene as a .blend file in the session folder (replacing the previous save there) and launch
+    the Blender app on this computer with that file open, so the person can look around and edit it by hand."""
     saved = call("save_blend")["saved"]
     try:
         subprocess.Popen([find_blender(), saved], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
@@ -622,8 +628,40 @@ def _compact(schema):
     return schema
 
 
+# What each tool really does, so AI apps can warn before risky calls. Order of each tuple:
+# (read only, destructive, idempotent, reaches outside this computer).
+# "Read only" means nothing changes at all; rendering still writes image files, so it is not read only.
+# "Destructive" means work can be lost or overwritten, even though most changes can be undone.
+HINTS = {
+    "design_guide": (True, False, True, False), "list_presets": (True, False, True, False),
+    "scene_info": (True, False, True, False), "scene_check": (True, False, True, False),
+    "list_animations": (True, False, True, False), "search_assets": (True, False, True, True),
+    "new_scene": (False, True, True, False), "delete_objects": (False, True, True, False),
+    "clear_animation": (False, True, True, False), "boolean": (False, True, False, False),
+    "undo": (False, True, False, False), "pose_character": (False, True, True, False),
+    "run_python": (False, True, False, True), "save_blend": (False, True, True, False),
+    "export_model": (False, True, True, False), "open_in_blender": (False, True, False, False),
+    "render_preview": (False, False, False, False), "render_final": (False, True, False, False),
+    "render_animation": (False, True, False, False), "contact_sheet": (False, False, False, False),
+    "create_object": (False, False, False, False), "create_rock": (False, False, False, False),
+    "create_terrain": (False, False, False, False), "create_blob": (False, False, False, False),
+    "create_limbs": (False, False, False, False), "create_character": (False, False, False, False),
+    "create_human": (False, False, False, True), "import_asset": (False, False, False, True),
+    "import_model": (False, False, False, False), "apply_texture": (False, False, True, True),
+    "drop_objects": (False, False, False, False), "drape_cloth": (False, False, False, False),
+    "animate": (False, False, False, False), "animate_character": (False, False, False, False),
+    "play_animation": (False, False, True, False), "transform_object": (False, False, True, False),
+    "apply_material": (False, False, True, False), "add_polish": (False, False, True, False),
+    "add_backdrop": (False, False, True, False), "studio_lighting": (False, False, True, True),
+    "frame_camera": (False, False, True, False), "set_look": (False, False, True, False),
+    "sculpt": (False, False, True, False),
+}
+
 for _tool in mcp._tool_manager._tools.values():
     _tool.parameters = _compact(_tool.parameters)
+    read_only, destructive, idempotent, open_world = HINTS[_tool.name]
+    _tool.annotations = ToolAnnotations(readOnlyHint=read_only, destructiveHint=destructive,
+                                        idempotentHint=idempotent, openWorldHint=open_world)
 
 
 def main():
