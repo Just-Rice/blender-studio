@@ -25,17 +25,18 @@ ARMS = {
     "plain": [PYTHON, str(ROOT / "bench" / "baseline_server.py")],
     "studio": [PYTHON, "-m", "blender_studio.server"],
 }
-TASKS = {
-    "mug": "A ceramic coffee mug on a saucer, photographed as a product shot for a homeware catalogue.",
-    "camp": "A low-poly campsite at dusk: a tent, a campfire and three pine trees.",
-    "robot": "A friendly toy robot waving hello.",
-}
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from tasks import REGULAR, TASKS as SUITE  # noqa: E402
+
+TASKS = {name: task["brief"] for name, task in SUITE.items()}
+USAGE_LIMIT = 0.8      # stop starting new runs once the Claude plan's usage window is this full
 SYSTEM = ("You are a 3D artist working in Blender through the tools provided. Make the picture the user asks "
           "for; you cannot ask the user anything. Look at a render of your work and improve it until you are "
           "satisfied. Your last render is taken as the finished picture. Finish with one sentence describing it.")
 CLAUDE_MAX_TURNS = 40
 GEMINI_MAX_TURNS = 9   # the free tier allows about 20 requests per model per day, shared by both arms
-TIMEOUT = 1200
+TIMEOUT = 1500
+GEMINI_RUN_LIMIT = 1200  # seconds; a Gemini run that has not finished by then is stopped
 
 
 def server_config(arm, run_dir):
@@ -94,6 +95,10 @@ def run_claude(model, task, arm, run_dir):
                     if item.get("type") == "image":
                         metrics["renders"] += 1
                         metrics["shots"].append(save_image(run_dir, metrics["renders"], item["source"]["data"]))
+        if event.get("type") == "rate_limit_event":
+            windows = event.get("rate_limit_info", {}).get("unifiedWindows", {})
+            used = max([w.get("utilization") or 0 for w in windows.values()] or [0])
+            metrics["usage"] = max(metrics.get("usage", 0), used)
         if event.get("type") == "result":
             usage = event.get("usage", {})
             metrics.update(
@@ -136,7 +141,7 @@ def ask_gemini(model, key, body):
         request = urllib.request.Request(url, data=json.dumps(body).encode(),
                                          headers={"Content-Type": "application/json", "x-goog-api-key": key})
         try:
-            with urllib.request.urlopen(request, timeout=240) as response:
+            with urllib.request.urlopen(request, timeout=120) as response:
                 return json.loads(response.read())
         except urllib.error.HTTPError as error:
             detail = error.read().decode(errors="replace")
@@ -184,6 +189,9 @@ async def run_gemini_async(model, task, arm, run_dir):
             "generationConfig": {"thinkingConfig": {"thinkingLevel": "low"}},
         }
         for _ in range(GEMINI_MAX_TURNS):
+            if time.time() - started > GEMINI_RUN_LIMIT:
+                metrics["stop"] = "time limit"
+                break
             asked = time.time()
             try:
                 reply = ask_gemini(model, key, body)
@@ -261,22 +269,49 @@ def run_one(family, model, task, arm, out):
     return metrics
 
 
+def copy_cached_plain(sources, out, models, tasks):
+    """Plain Blender does not change between cycles, so its runs can be reused instead of paid for again."""
+    import shutil
+    copied = 0
+    for source in sources:
+        for model in models:
+            for task in tasks:
+                name = f"{model}__{task}__plain"
+                if (Path(source) / name / "metrics.json").exists() and not (out / name).exists():
+                    shutil.copytree(Path(source) / name, out / name)
+                    copied += 1
+    return copied
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("out", type=Path)
     parser.add_argument("--claude", default="")
     parser.add_argument("--gemini", default="", help="model:task pairs, comma separated")
-    parser.add_argument("--tasks", default="mug,camp,robot")
+    parser.add_argument("--tasks", default=",".join(REGULAR))
+    parser.add_argument("--plain-from", default="", help="earlier run folders to reuse plain-Blender runs from")
+    parser.add_argument("--arms", default="plain,studio")
     args = parser.parse_args()
     args.out.mkdir(parents=True, exist_ok=True)
-    for model in filter(None, args.claude.split(",")):
-        for task in args.tasks.split(","):
+    models, tasks, arms = (list(filter(None, x.split(","))) for x in (args.claude, args.tasks, args.arms))
+    unknown = [t for t in tasks if t not in TASKS]
+    if unknown:
+        raise SystemExit(f"Unknown tasks: {', '.join(unknown)}. Known: {', '.join(TASKS)}")
+    if args.plain_from:
+        print("reused plain runs:", copy_cached_plain(args.plain_from.split(","), args.out, models, tasks), flush=True)
+    for model in models:
+        for task in tasks:
             # Both arms at once, so they share the machine equally.
             with concurrent.futures.ThreadPoolExecutor(2) as pool:
-                list(pool.map(lambda arm: run_one("claude", model, task, arm, args.out), ARMS))
+                results = list(pool.map(lambda arm: run_one("claude", model, task, arm, args.out), arms))
+            used = max(r.get("usage", 0) for r in results)
+            if used >= USAGE_LIMIT:
+                print(f"PAUSED: the Claude plan's usage window is {used:.0%} full. Run the same command again "
+                      "later; finished runs are skipped.", flush=True)
+                raise SystemExit(3)
     for pair in filter(None, args.gemini.split(",")):
         model, task = pair.split(":")
-        for arm in ARMS:
+        for arm in arms:
             run_one("gemini", model, task, arm, args.out)
 
 

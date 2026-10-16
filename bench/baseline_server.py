@@ -11,7 +11,8 @@ from PIL import Image as PILImage  # noqa: E402
 from blender_studio.launcher import Blender, BlenderError  # noqa: E402
 
 mcp = FastMCP("blender", instructions="Blender is running with its default startup scene (a cube, a light and "
-              "a camera). Run Python in it with execute_python and look at the camera view with render_image.")
+              "a camera). Run Python in it with execute_python, look at the camera view with render_image, and check an "
+              "animation with render_frames.")
 blender = Blender()
 
 
@@ -43,6 +44,24 @@ def render_image() -> list:
     buffer = io.BytesIO()
     image.save(buffer, "JPEG", quality=88)
     return [Image(data=buffer.getvalue(), format="jpeg"), json.dumps({"saved_to": result["path"]})]
+
+
+@mcp.tool()
+def render_frames(count: int = 6) -> list:
+    """Render evenly spaced frames across the scene's timeline (frame_start to frame_end) at half size, and
+    return them side by side as one picture, to check an animation."""
+    result = call("raw_frames", count=count)
+    frames = [PILImage.open(f["path"]).convert("RGB") for f in result["frames"]]
+    cell_w = 420
+    cell_h = round(cell_w * frames[0].height / frames[0].width)
+    columns = 3
+    sheet = PILImage.new("RGB", (cell_w * columns, cell_h * -(-len(frames) // columns)), (24, 24, 28))
+    for index, frame in enumerate(frames):
+        sheet.paste(frame.resize((cell_w, cell_h)), ((index % columns) * cell_w, (index // columns) * cell_h))
+    buffer = io.BytesIO()
+    sheet.save(buffer, "JPEG", quality=88)
+    summary = {"frames": [f["frame"] for f in result["frames"]], "fps": result["fps"]}
+    return [Image(data=buffer.getvalue(), format="jpeg"), json.dumps(summary)]
 
 
 if __name__ == "__main__":

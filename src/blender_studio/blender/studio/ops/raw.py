@@ -44,3 +44,31 @@ def raw_render():
     scene.render.filepath = state.render_path("render")
     bpy.ops.render.render(write_still=True)
     return {"path": scene.render.filepath}
+
+
+@command(mutates=False)
+def raw_frames(count=6):
+    """Render evenly spaced frames of the timeline with the scene's own settings, at half size."""
+    scene = bpy.context.scene
+    if scene.camera is None:
+        raise ValueError("The scene has no active camera.")
+    settings = scene.render.image_settings
+    if hasattr(settings, "media_type"):
+        settings.media_type = "IMAGE"
+    settings.file_format = "PNG"
+    saved = (scene.frame_current, scene.render.resolution_percentage, scene.render.filepath)
+    first, last = scene.frame_start, scene.frame_end
+    count = max(2, min(int(count), 12))
+    frames = []
+    try:
+        scene.render.resolution_percentage = max(10, saved[1] // 2)
+        for index in range(count):
+            frame = first + round((last - first) * index / (count - 1))
+            scene.frame_set(frame)
+            scene.render.filepath = state.render_path(f"frame-{index:02d}")
+            bpy.ops.render.render(write_still=True)
+            frames.append({"frame": frame, "path": scene.render.filepath})
+    finally:
+        scene.frame_set(saved[0])
+        scene.render.resolution_percentage, scene.render.filepath = saved[1], saved[2]
+    return {"frames": frames, "fps": scene.render.fps, "first": first, "last": last}
