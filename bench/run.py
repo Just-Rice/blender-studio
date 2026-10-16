@@ -83,6 +83,8 @@ def run_claude(model, task, arm, run_dir):
                 name = block["name"].split("__")[-1]
                 names[block["id"]] = name
                 metrics["tool_calls"] += 1
+                metrics["last_call"] = "render" if call["name"] in ("render_image", "render_preview", "render_final",
+                                                                     "render_frames", "render_animation") else "other"
                 metrics["tools_used"][name] = metrics["tools_used"].get(name, 0) + 1
             elif block.get("type") == "tool_result":
                 content = block.get("content") if isinstance(block.get("content"), list) else []
@@ -225,6 +227,8 @@ async def run_gemini_async(model, task, arm, run_dir):
                 result = await session.call_tool(call["name"], args)
                 text = "\n".join(c.text for c in result.content if c.type == "text")
                 metrics["tool_calls"] += 1
+                metrics["last_call"] = "render" if call["name"] in ("render_image", "render_preview", "render_final",
+                                                                     "render_frames", "render_animation") else "other"
                 metrics["tools_used"][call["name"]] = metrics["tools_used"].get(call["name"], 0) + 1
                 if result.isError:
                     metrics["tool_errors"] += 1
@@ -241,6 +245,16 @@ async def run_gemini_async(model, task, arm, run_dir):
             body["contents"].append({"role": "user", "parts": answers + pictures})
         else:
             metrics["stop"] = "turn limit"
+        if not metrics["shots"] or metrics.get("last_call") != "render":
+            # Gemini's free allowance caps the turns, and it often spends them all before rendering.
+            # Photograph the scene as it was left, the same way on both arms, so there is always a picture.
+            closing = "render_image" if arm == "plain" else "render_preview"
+            result = await session.call_tool(closing, {})
+            for item in result.content:
+                if item.type == "image":
+                    metrics["renders"] += 1
+                    metrics["shots"].append(save_image(run_dir, metrics["renders"], item.data))
+                    metrics["closing_render"] = True
     metrics["wall_s"] = round(time.time() - started, 1)
     metrics["api_s"] = round(metrics["api_s"], 1)
     return metrics
