@@ -264,7 +264,8 @@ def run_one(family, model, task, arm, out):
     run_dir = out / f"{model}__{task}__{arm}"
     done = run_dir / "metrics.json"
     if done.exists():
-        return json.loads(done.read_text())
+        # Finished earlier: reuse it, but its usage reading is out of date and must not trigger a pause.
+        return {**json.loads(done.read_text()), "usage": 0}
     run_dir.mkdir(parents=True, exist_ok=True)
     print(f"start  {model} {task} {arm}", flush=True)
     try:
