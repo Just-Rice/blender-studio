@@ -12,6 +12,7 @@ import base64
 import concurrent.futures
 import json
 import os
+import shutil
 import subprocess
 import sys
 import time
@@ -277,6 +278,11 @@ def run_one(family, model, task, arm, out):
         metrics = {"family": family, "model": model, "task": task, "arm": arm, "finished": False,
                    "crashed": "; ".join(f"{type(e).__name__}: {e}" for e in getattr(error, "exceptions", [error]))[:600],
                    "shots": [], "renders": 0}
+    if metrics.get("family") == "claude" and not metrics.get("tool_calls") and metrics.get("usage", 0) >= 0.99:
+        # Turned away by the usage limit before doing anything: not a result, so leave it to be run again.
+        print(f"refused {model} {task} {arm}: usage limit reached", flush=True)
+        shutil.rmtree(run_dir, ignore_errors=True)
+        return metrics
     done.write_text(json.dumps(metrics, indent=1))
     print(f"done   {model} {task} {arm}: {metrics.get('wall_s')}s, {metrics.get('tool_calls')} calls, "
           f"{metrics.get('tool_errors')} errors, {metrics.get('renders')} renders, "
