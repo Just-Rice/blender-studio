@@ -84,8 +84,6 @@ def run_claude(model, task, arm, run_dir):
                 name = block["name"].split("__")[-1]
                 names[block["id"]] = name
                 metrics["tool_calls"] += 1
-                metrics["last_call"] = "render" if call["name"] in ("render_image", "render_preview", "render_final",
-                                                                     "render_frames", "render_animation") else "other"
                 metrics["tools_used"][name] = metrics["tools_used"].get(name, 0) + 1
             elif block.get("type") == "tool_result":
                 content = block.get("content") if isinstance(block.get("content"), list) else []
