@@ -17,12 +17,16 @@ runs_dir, out_artifact, site_docs = Path(sys.argv[1]), Path(sys.argv[2]), Path(s
 NAME = {"claude-haiku-4-5-20251001": "Claude Haiku 4.5", "claude-haiku-5-5": "Claude Haiku 5.5",
         "claude-sonnet-5-5": "Claude Sonnet 5.5", "claude-opus-5-5": "Claude Opus 5.5",
         "gemini-3.8-flash": "Gemini 3.8 Flash"}
-TASKS = {"mug": "Ceramic mug product shot", "camp": "Low-poly campsite at dusk", "robot": "Toy robot waving"}
-ARM = {"plain": "Plain Blender", "studio": "Blender Studio"}
-# Judge averages from the first round, with the tools as they were: (plain, tools)
-BEFORE = {"claude-haiku-4-5-20251001": (1.5, 4.0), "claude-haiku-5-5": (5.5, 5.3), "claude-sonnet-5-5": (5.5, 6.7),
-          "claude-opus-5-5": (7.7, 6.8)}
+sys.path.insert(0, str(HERE.parent))
+from tasks import TASKS as SUITE  # noqa: E402
 
+SHORT = {"mug": "Ceramic mug product shot", "hillside": "Rocky hillside", "busstop": "Three people at a bus stop",
+         "spill": "Spilled toy blocks and a cloth", "reading": "Reading corner", "perfume": "Glass perfume bottle",
+         "cheese": "Swiss cheese with a bite", "robot-video": "Robot walks in and waves (video)",
+         "market": "Market stall at dusk", "campsite": "Low-poly campsite at dusk",
+         "camp": "Low-poly campsite at dusk", "robot": "Toy robot waving"}
+TASKS = {name: SHORT.get(name, name) for name in SUITE}
+ARM = {"plain": "Plain Blender", "studio": "Blender Studio"}
 runs = {}
 for path in sorted(runs_dir.glob("*/metrics.json")):
     m = json.loads(path.read_text())
@@ -36,6 +40,11 @@ def jd(model, task):
 
 def score(model, task, arm):
     return jd(model, task).get("scores", {}).get(arm, {}).get("overall")
+
+
+def ticked(model, task, arm):
+    """Share of the request's checklist the judge found in this picture (None if not judged that way)."""
+    return jd(model, task).get("checklist", {}).get(arm)
 
 
 def k(value):
@@ -65,6 +74,11 @@ def avg(model, arm):
     return sum(values) / len(values) if values else None
 
 
+def checklist_text(model, arm):
+    values = [ticked(model, t, arm) for m, t in PAIRS if m == model and ticked(model, t, arm) is not None]
+    return f"{100 * sum(values) / len(values):.0f}%" if values else "n/a"
+
+
 def model_rows(model):
     tasks = [t for m, t in ALL if m == model]
     out = ""
@@ -76,6 +90,7 @@ def model_rows(model):
         mark = avg(model, arm)
         out += (f"<tr class='{arm}'>{head}<td><i class='dot {arm}'></i> {ARM[arm]}</td>"
                 f"<td>{'n/a' if mark is None else f'{mark:.1f}'}</td><td>{won} of {len(tasks)}</td>"
+                f"<td>{checklist_text(model, arm)}</td>"
                 f"<td>{tot(model, arm, 'wall_s'):.0f} s</td><td>{tot(model, arm, 'api_s'):.0f} s</td>"
                 f"<td>{k(tot(model, arm, 'output_tokens'))}</td><td>{k(tot(model, arm, 'input_tokens'))}</td>"
                 f"<td>{f'${cost:.2f}' if cost else 'free tier'}</td>"
@@ -109,7 +124,9 @@ def cards(prefix, folder):
             best = "<em>judged better</em>" if verdict.get("winner") == arm else ""
             sides += (f"<div class='side'><h4><i class='dot {arm}'></i>{ARM[arm]}{best}</h4>{picture}"
                       f"<ul><li>Judge: {'n/a' if mark is None else f'{mark:.1f} / 10'}</li>"
-                      f"<li>{run.get('wall_s', 0):.0f} s total, {run.get('api_s', 0):.0f} s on the model</li>"
+                      + (f"<li>Checklist: {round(ticked(model, task, arm) * len(SUITE[task]['checklist']))} of "
+                         f"{len(SUITE[task]['checklist'])} met</li>" if ticked(model, task, arm) is not None else "")
+                      + f"<li>{run.get('wall_s', 0):.0f} s total, {run.get('api_s', 0):.0f} s on the model</li>"
                       f"<li>{k(run.get('output_tokens', 0))} tokens written, {k(run.get('input_tokens', 0))} read</li>"
                       f"<li>{run.get('tool_calls', 0)} tool calls, {run.get('tool_errors', 0)} failed</li>{note}</ul></div>")
         reasons = [v.get("reason") for v in verdict.get("verdicts", []) if v.get("reason")]
@@ -124,6 +141,8 @@ def cards(prefix, folder):
 
 def charts():
     specs = [("Judge's overall score", "out of 10, average of two blind looks", lambda p, a: score(*p, a), lambda v: f"{v:.1f}", 10),
+             ("Checklist met", "share of the request's checklist the judge found", lambda p, a: (ticked(*p, a) or 0) * 100,
+              lambda v: f"{v:.0f}%", 100),
              ("Time waiting on the model", "seconds", lambda p, a: get(*p, a, "api_s"), lambda v: f"{v:.0f} s", None),
              ("Tokens read by the model", "thousands, across all its requests", lambda p, a: get(*p, a, "input_tokens"), k, None),
              ("Tool calls that failed", "count", lambda p, a: get(*p, a, "tool_errors"), lambda v: f"{v:.0f}", None)]
@@ -144,17 +163,18 @@ def charts():
     return "\n".join(figures)
 
 
+# Averages on the original three requests (mug, campsite, robot): round 1, with the tools as they were,
+# and round 2, after the fixes. (plain round 1, tools round 1, plain round 2, tools round 2)
+ROUNDS = {"claude-haiku-4-5-20251001": (1.5, 4.0, 1.8, 4.0), "claude-haiku-5-5": (5.5, 5.3, 4.8, 6.3),
+          "claude-sonnet-5-5": (5.5, 6.7, 4.8, 5.7), "claude-opus-5-5": (7.7, 6.8, 7.2, 8.3)}
+
+
 def before_after():
-    body = ""
-    for model in MODELS:
-        if model not in BEFORE or avg(model, "studio") is None:
-            continue
-        p0, s0 = BEFORE[model]
-        body += (f"<tr><th scope='row'>{NAME[model]}</th><td>{p0:.1f}</td><td>{s0:.1f}</td>"
-                 f"<td>{avg(model, 'plain'):.1f}</td><td>{avg(model, 'studio'):.1f}</td></tr>")
-    return ("<div class='scroll'><table><thead><tr><th scope='col'>Judge's average, of 10</th>"
-            "<th scope='col'>Plain, first round</th><th scope='col'>Tools, first round</th>"
-            "<th scope='col'>Plain, now</th><th scope='col'>Tools, now</th></tr></thead>"
+    body = "".join(f"<tr><th scope='row'>{NAME[m]}</th>" + "".join(f"<td>{v:.1f}</td>" for v in values) + "</tr>"
+                   for m, values in ROUNDS.items())
+    return ("<div class='scroll'><table><thead><tr><th scope='col'>Judge's average, of 10, first three requests</th>"
+            "<th scope='col'>Plain, round 1</th><th scope='col'>Tools, round 1</th>"
+            "<th scope='col'>Plain, round 2</th><th scope='col'>Tools, round 2</th></tr></thead>"
             f"<tbody>{body}</tbody></table></div>")
 
 
@@ -162,7 +182,7 @@ facts = {"pairs": len(PAIRS), "unscored": UNSCORED, "wins": wins, "mean": mean,
          "failed": {a: [sum(tot(m, a, "tool_errors") for m in MODELS), sum(tot(m, a, "tool_calls") for m in MODELS)] for a in ARM}}
 for model in MODELS:
     facts[NAME[model]] = {
-        "score": {a: avg(model, a) for a in ARM}, "before": BEFORE.get(model),
+        "score": {a: avg(model, a) for a in ARM}, "checklist": {a: checklist_text(model, a) for a in ARM},
         "winner": {t: winner.get((model, t)) for m, t in ALL if m == model},
         **{f: {a: round(tot(model, a, f), 2) for a in ARM} for f in ("cost_usd", "wall_s", "api_s", "input_tokens", "output_tokens")},
         "failed": {a: [tot(model, a, "tool_errors"), tot(model, a, "tool_calls")] for a in ARM},
