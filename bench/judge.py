@@ -7,6 +7,7 @@ neutral file names in a random order and shown to the judge twice, once each way
 side benefits from being seen first. Writes OUT/judging.json.
 """
 import argparse
+import concurrent.futures
 import json
 import os
 import random
@@ -98,6 +99,7 @@ def main():
     parser.add_argument("--judge", default="claude-opus-5-5")
     parser.add_argument("--versus", type=Path, default=None,
                         help="an earlier cycle: compare its Blender Studio pictures with this cycle's instead")
+    parser.add_argument("--workers", type=int, default=1, help="pairs judged at the same time")
     args = parser.parse_args()
     load = lambda folder: {(r["model"], r["task"], r["arm"]): r | {"dir": p.parent}
                            for p in sorted(folder.glob("*/metrics.json")) for r in [json.loads(p.read_text())]}
@@ -112,20 +114,24 @@ def main():
                 if arm == "studio" and (m, t, "plain") in runs}
         results_path, folder_name = args.out / "judging.json", "judging"
     results = json.loads(results_path.read_text()) if results_path.exists() else {}
-    rng = random.Random(7)
-    for (model, task), sides in sorted(jobs.items()):
-        key = f"{model}__{task}"
-        if key in results:
-            continue
+    todo = [(model, task, sides) for (model, task), sides in sorted(jobs.items()) if f"{model}__{task}" not in results]
+
+    def judge_one(job):
+        model, task, sides = job
         pictures = {label: final_picture(run) for label, run in sides.items()}
         missing = [label for label, path in pictures.items() if path is None]
         if missing:
-            results[key] = {"model": model, "task": task, "no_picture": missing,
-                            "winner": next((l for l in pictures if l not in missing), None)}
-        else:
-            results[key] = {"model": model, **judge_pair(args.judge, task, pictures,
-                                                          args.out / folder_name / key, rng)}
-        results_path.write_text(json.dumps(results, indent=1))
+            return {"model": model, "task": task, "no_picture": missing,
+                    "winner": next((l for l in pictures if l not in missing), None)}
+        # Seeded per pair, so the order each pair is shown in does not depend on which finishes first.
+        rng = random.Random(f"{model}__{task}")
+        return {"model": model, **judge_pair(args.judge, task, pictures, args.out / folder_name / f"{model}__{task}",
+                                             rng)}
+
+    with concurrent.futures.ThreadPoolExecutor(args.workers) as pool:
+        for (model, task, _), result in zip(todo, pool.map(judge_one, todo)):
+            results[f"{model}__{task}"] = result
+            results_path.write_text(json.dumps(results, indent=1))
     results_path.write_text(json.dumps(results, indent=1))
     print("judged", len(results), "pairs")
 

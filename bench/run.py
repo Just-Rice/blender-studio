@@ -13,6 +13,7 @@ import concurrent.futures
 import json
 import os
 import shutil
+import signal
 import subprocess
 import sys
 import time
@@ -36,7 +37,7 @@ SYSTEM = ("You are a 3D artist working in Blender through the tools provided. Ma
           "satisfied. Your last render is taken as the finished picture. Finish with one sentence describing it.")
 CLAUDE_MAX_TURNS = 40
 GEMINI_MAX_TURNS = 9   # the free tier allows about 20 requests per model per day, shared by both arms
-TIMEOUT = 1500
+TIMEOUT = 3600   # seconds; long enough for Opus building and rendering a detailed scene
 GEMINI_RUN_LIMIT = 1200  # seconds; a Gemini run that has not finished by then is stopped
 
 
@@ -62,10 +63,15 @@ def run_claude(model, task, arm, run_dir):
     env = {k: v for k, v in os.environ.items() if not k.startswith("CLAUDE")}
     started = time.time()
     with open(run_dir / "stream.jsonl", "wb") as stream:
+        # Its own process group, so a timeout also stops the tool server and Blender it started.
+        process = subprocess.Popen(command, cwd=run_dir, env=env, stdout=stream, stderr=subprocess.STDOUT,
+                                   start_new_session=True)
         try:
-            subprocess.run(command, cwd=run_dir, env=env, stdout=stream, stderr=subprocess.STDOUT, timeout=TIMEOUT)
+            process.wait(timeout=TIMEOUT)
             timed_out = False
         except subprocess.TimeoutExpired:
+            os.killpg(process.pid, signal.SIGKILL)
+            process.wait()
             timed_out = True
     wall = time.time() - started
 

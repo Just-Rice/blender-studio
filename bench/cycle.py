@@ -1,7 +1,7 @@
 """One measurement cycle: run, judge (against plain and against the previous cycle), analyse, record.
 
     uv run python bench/cycle.py NAME --models claude-haiku-5-5,claude-opus-5-5 [--tasks regular|holdout|all|a,b]
-                                      [--plain-from DIR,DIR] [--previous DIR] [--gemini model:task]
+                                      [--plain-from DIR,DIR] [--previous DIR] [--gemini model:task] [--parallel]
 
 Raw runs go to ~/BlenderStudio/bench/NAME. The summary is copied to bench/history/NAME.json. Re-running the same
 command resumes: finished runs and judged pairs are skipped.
@@ -21,10 +21,14 @@ from tasks import HOLDOUT, REGULAR  # noqa: E402
 RUNS = Path.home() / "BlenderStudio" / "bench"
 
 
-def step(*command):
+def start(*command):
     env = {k: v for k, v in os.environ.items() if not k.startswith("CLAUDE")}
     print("\n$", " ".join(str(c) for c in command), flush=True)
-    return subprocess.run([sys.executable, *map(str, command)], cwd=HERE, env=env).returncode
+    return subprocess.Popen([sys.executable, *map(str, command)], cwd=HERE, env=env)
+
+
+def step(*command):
+    return start(*command).wait()
 
 
 def main():
@@ -36,22 +40,30 @@ def main():
     parser.add_argument("--previous", default="")
     parser.add_argument("--gemini", default="")
     parser.add_argument("--judge", default="claude-opus-5-5")
+    parser.add_argument("--parallel", action="store_true",
+                        help="run every model (and Gemini) at the same time instead of one after another")
     args = parser.parse_args()
     tasks = {"regular": REGULAR, "holdout": HOLDOUT, "all": REGULAR + HOLDOUT}.get(args.tasks, args.tasks.split(","))
     out = RUNS / args.name
     out.mkdir(parents=True, exist_ok=True)
-    run_args = ["run.py", out, "--claude", args.models, "--tasks", ",".join(tasks)]
+    run_args = ["run.py", out, "--tasks", ",".join(tasks)]
     if args.plain_from:
         run_args += ["--plain-from", args.plain_from]
-    if args.gemini:
-        run_args += ["--gemini", args.gemini]
-    code = step(*run_args)
+    if args.parallel:
+        jobs = [start(*run_args, "--claude", model) for model in args.models.split(",")]
+        if args.gemini:
+            jobs.append(start(*run_args, "--gemini", args.gemini))
+        codes = [job.wait() for job in jobs]
+        code = 3 if 3 in codes else max(codes)
+    else:
+        code = step(*run_args, "--claude", args.models, *(["--gemini", args.gemini] if args.gemini else []))
     if code == 3:
         print("Stopped for the usage limit. Run the same command again later to carry on.")
         return code
-    step("judge.py", out, "--judge", args.judge)
+    workers = ["--workers", "4" if args.parallel else "1"]
+    step("judge.py", out, "--judge", args.judge, *workers)
     if args.previous:
-        step("judge.py", out, "--judge", args.judge, "--versus", args.previous)
+        step("judge.py", out, "--judge", args.judge, "--versus", args.previous, *workers)
     step("analyze.py", out)
     history = HERE / "history"
     history.mkdir(exist_ok=True)
