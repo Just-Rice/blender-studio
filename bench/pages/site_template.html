@@ -359,12 +359,13 @@ footer { border-top: 1px solid var(--line); padding-block: 34px 60px; font-size:
 (function () {
   var shows = Array.prototype.slice.call(document.querySelectorAll(".show[data-frames]")).map(function (el) {
     var frames = el.dataset.frames.split(",");
-    return { el: el, frames: frames, image: el.querySelector("img"), count: el.querySelector(".count"), loaded: false };
+    return { el: el, frames: frames, image: el.querySelector("img"), count: el.querySelector(".count"), loaded: false,
+      numbers: el.dataset.numbers ? el.dataset.numbers.split(",") : null, total: el.dataset.total || frames.length };
   });
   var button = document.getElementById("toggle"), timer = null, tick = 0;
   function paint(show, index) {
     show.image.src = show.frames[index];
-    show.count.textContent = "Render " + (index + 1) + " of " + show.frames.length;
+    show.count.textContent = "Render " + (show.numbers ? show.numbers[index] : index + 1) + " of " + show.total;
   }
   function visible(el) {
     var box = el.getBoundingClientRect();

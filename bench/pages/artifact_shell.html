@@ -171,12 +171,13 @@ code { font-family: var(--mono); font-size: 0.86em; overflow-wrap: anywhere; }
   var shows = Array.prototype.slice.call(document.querySelectorAll(".show[data-frames]")).map(function (el) {
     var frames = el.dataset.frames.split(",");
     frames.forEach(function (src) { new Image().src = src; });
-    return { frames: frames, image: el.querySelector("img"), count: el.querySelector(".count"), index: frames.length - 1 };
+    return { frames: frames, image: el.querySelector("img"), count: el.querySelector(".count"), index: frames.length - 1,
+      numbers: el.dataset.numbers ? el.dataset.numbers.split(",") : null, total: el.dataset.total || frames.length };
   });
   var button = document.getElementById("toggle"), timer = null, tick = 0;
   function paint(show) {
     show.image.src = show.frames[show.index];
-    show.count.textContent = "Render " + (show.index + 1) + " of " + show.frames.length;
+    show.count.textContent = "Render " + (show.numbers ? show.numbers[show.index] : show.index + 1) + " of " + show.total;
   }
   function step() {
     tick += 1;

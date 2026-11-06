@@ -106,6 +106,16 @@ def spread(items, most):
     return [items[round(i * (len(items) - 1) / (most - 1))] for i in range(most)]
 
 
+def name_sides(verdict):
+    """The judge wrote 'the first' and 'the second'; say which way each picture was made instead."""
+    names = {slot: ARM[verdict[f"{slot}_was"]] for slot in ("first", "second")}
+    text = re.sub(r"\b([Tt]he) (first|second)\b(?! (?:frame|frames|few|two|three|half|row|strip|time|look))"
+                  r"(?: (?:picture|image|one|render)\b)?",
+                  lambda m: f"{m.group(1)} {names[m.group(2)]} picture", verdict["reason"])
+    return re.sub(r"\b(First|Second|first|second)\b(?= (?:has|is|shows|picture|image|one))",
+                  lambda m: ("The " if m.group(1)[0].isupper() else "the ") + names[m.group(1).lower()] + " picture", text)
+
+
 def cards(prefix, folder, most_frames):
     folder.mkdir(parents=True, exist_ok=True)
     out = []
@@ -123,7 +133,9 @@ def cards(prefix, folder, most_frames):
                 image.save(folder / name, quality=80)
                 frames.append(prefix + name)
             mark = score(model, task, arm)
-            picture = (f"<div class='show' data-frames='{','.join(frames)}'><img src='{frames[-1]}' loading='lazy' "
+            numbers = ",".join(str(i) for i, _ in spread(shots, most_frames))
+            picture = (f"<div class='show' data-frames='{','.join(frames)}' data-numbers='{numbers}' "
+                       f"data-total='{len(shots)}'><img src='{frames[-1]}' loading='lazy' "
                        f"alt='{ARM[arm]} renders for {TASKS[task]} by {NAME[model]}, from first to final'>"
                        f"<span class='count'>Render {len(shots)} of {len(shots)}</span></div>") if frames else \
                 "<div class='show none'>No picture was produced</div>"
@@ -138,8 +150,8 @@ def cards(prefix, folder, most_frames):
                       + f"<li>{run.get('wall_s', 0):.0f} s total, {run.get('api_s', 0):.0f} s on the model</li>"
                       f"<li>{k(run.get('output_tokens', 0))} tokens written, {k(run.get('input_tokens', 0))} read</li>"
                       f"<li>{run.get('tool_calls', 0)} tool calls, {run.get('tool_errors', 0)} failed</li>{note}</ul></div>")
-        reasons = [v.get("reason") for v in verdict.get("verdicts", []) if v.get("reason")]
-        reason = f"<p class='reason'>Judge: “{html.escape(reasons[0])}”</p>" if reasons else ""
+        said = [v for v in verdict.get("verdicts", []) if v.get("reason")]
+        reason = f"<p class='reason'>Judge: “{html.escape(name_sides(said[0]))}”</p>" if said else ""
         split = verdict.get("wins", {})
         tie = "<p class='reason'>The judge disagreed with itself when the order was swapped, so this counts as a tie.</p>" \
             if split and max(split.values()) < 2 else ""
@@ -275,7 +287,7 @@ def fixes(prefix, tag_open, plain_lists, names):
 
 
 TRIO_CSS = ("\n.trio { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }\n"
-            ".trio .show { aspect-ratio: 4 / 5; }\n.trio .show img { width: 100%; height: 100%; object-fit: contain; }\n"
+            ".trio .show { aspect-ratio: 4 / 3; }\n.trio .show img { width: 100%; height: 100%; object-fit: contain; }\n"
             "@media (max-width: 640px) { .trio { grid-template-columns: 1fr; } }\n")
 
 # ---- artifact page ------------------------------------------------------
