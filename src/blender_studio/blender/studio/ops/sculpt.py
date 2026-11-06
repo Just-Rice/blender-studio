@@ -1,4 +1,5 @@
 """Organic shapes without brush strokes: rocks, terrain, blobs, limbs, surface roughening and cuts."""
+import math
 import random
 
 import bmesh
@@ -88,8 +89,13 @@ def create_rock(name=None, size=1.0, roughness=0.35, style="smooth", seed=0, loc
 
 @command()
 def create_terrain(name=None, size=10.0, height=1.5, detail=1.0, style="smooth", island=False, seed=0,
-                   location=None):
-    """Rolling ground `size` metres wide with hills up to `height`. island=True slopes the edges down to zero."""
+                   location=None, shape="rolling", rocky=0.0):
+    """Ground `size` metres wide, up to `height` high. shape: rolling (gentle hills all over), hill (one big
+    rise behind the centre), slope (rising from front to back). rocky 0-1 adds craggy breaks to the surface.
+    island=True slopes the edges down to zero."""
+    shape = shape.lower()
+    if shape not in ("rolling", "hill", "slope"):
+        raise ValueError(f"Unknown shape '{shape}'. Choose from: rolling, hill, slope")
     rng = random.Random(seed)
     offset = Vector((rng.uniform(0, 100), rng.uniform(0, 100), 0))
     lowpoly = style == "lowpoly"
@@ -97,11 +103,23 @@ def create_terrain(name=None, size=10.0, height=1.5, detail=1.0, style="smooth",
     bm = bmesh.new()
     bmesh.ops.create_grid(bm, x_segments=segments, y_segments=segments, size=size / 2)
     frequency = detail * 3.0 / size
+    half = size / 2
     for vert in bm.verts:
         point = Vector((vert.co.x, vert.co.y, 0)) * frequency + offset
         level = 0.5 + 0.5 * noise.fractal(point, 1.0, 2.0, 2 if lowpoly else 6)
+        if shape == "hill":
+            # One broad rise peaking a little behind the centre (the camera looks from -Y).
+            d = Vector((vert.co.x, vert.co.y - size * 0.15)).length / (size * 0.38)
+            level = math.exp(-d * d) + (level - 0.5) * 0.3
+        elif shape == "slope":
+            t = min(1.0, max(0.0, vert.co.y / size + 0.5))
+            level = t * t * (3 - 2 * t) + (level - 0.5) * 0.3
+        if rocky:
+            # Ridged noise gives sharp crests and ledges rather than soft bumps.
+            crag = noise.ridged_multi_fractal(point * 2.2 + offset, 1.0, 2.0, 4, 1.0, 2.0)
+            level += float(rocky) * 0.2 * crag
         if island:
-            edge = min(1.0, (Vector((vert.co.x, vert.co.y)).length / (size / 2)) ** 2)
+            edge = min(1.0, (Vector((vert.co.x, vert.co.y)).length / half) ** 2)
             level = (level * 0.8 + 0.2) * max(0.0, 1.0 - edge) ** 0.8
         vert.co.z = max(level, 0.0) * height
     if island:

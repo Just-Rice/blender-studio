@@ -33,6 +33,11 @@ PRESETS = {
     "stone": dict(color="#77736c", inputs={"Roughness": 0.75}, detail="rough"),
     "skin": dict(color="#d9a183", inputs={"Roughness": 0.45, "Subsurface Weight": 0.6, "Subsurface Scale": 0.05}),
     "wax": dict(color="#f1e3c0", inputs={"Roughness": 0.4, "Subsurface Weight": 1.0, "Subsurface Scale": 0.1}),
+    "paper": dict(color="#f1ece2", inputs={"Roughness": 0.95, "Specular IOR Level": 0.2}),
+    "cardboard": dict(color="#b98b5c", inputs={"Roughness": 0.95, "Specular IOR Level": 0.2}, detail="rough"),
+    # Soft and matte, lit from within like real cloud, never shiny like a white plastic blob.
+    "cloud": dict(color="#f5f6f9", inputs={"Roughness": 1.0, "Specular IOR Level": 0.0, "Subsurface Weight": 1.0,
+                                           "Subsurface Scale": 0.5, "Sheen Weight": 0.5, "Sheen Roughness": 1.0}),
     "glow": dict(color="#ff5a1f", inputs={"Roughness": 0.4, "Emission Strength": 5.0}, emissive=True),
     "neon_tube": dict(color="#22e0ff", inputs={"Roughness": 0.2, "Emission Strength": 12.0}, emissive=True),
 }
@@ -145,9 +150,18 @@ def build_material(name, preset, color=None, size=1.0, local_size=1.0, overrides
     return material, skipped
 
 
+# Names models reach for that are not presets themselves.
+ALIASES = {"metal": "steel", "metallic": "steel", "iron": "steel", "silver": "chrome", "mirror": "chrome",
+           "brass": "gold", "bronze": "copper", "plastic": "plastic_glossy", "matte_plastic": "plastic_matte",
+           "cloth": "fabric", "linen": "fabric", "cotton": "fabric", "rock": "stone", "marble": "porcelain",
+           "liquid": "water", "emission": "glow", "emissive": "glow", "light": "glow", "smoke": "cloud",
+           "fog": "cloud", "mist": "cloud", "card": "cardboard"}
+
+
 @command()
 def apply_material(objects, preset, color=None, roughness=None, metallic=None, emission_strength=None):
-    preset = preset.lower()
+    preset = preset.lower().replace(" ", "_")
+    preset = ALIASES.get(preset, preset)
     if preset not in PRESETS:
         raise ValueError(f"Unknown preset '{preset}'. Choose from: {', '.join(PRESETS)}")
     overrides = {k: v for k, v in (("Roughness", roughness), ("Metallic", metallic),

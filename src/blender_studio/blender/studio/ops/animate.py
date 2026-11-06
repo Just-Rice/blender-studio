@@ -71,9 +71,11 @@ def animate(kind, target=None, seconds=4.0, amount=None, start_seconds=0.0):
             # One frame past the end, so the last frame is not a repeat of the first when looped.
             pivot.keyframe_insert("rotation_euler", frame=last + 1)
     elif kind in ("camera_orbit", "dolly"):
+        if scene.camera is None:
+            # Frame one on the subject rather than refuse; the move starts from that view.
+            from .camera import frame_camera
+            frame_camera(subjects=target)
         cam = scene.camera
-        if cam is None:
-            raise ValueError("There is no camera yet. Call frame_camera first.")
         _, _, center, _ = util.bounds(util.require_subjects(target))
         moved.append(cam.name)
         if kind == "camera_orbit":
@@ -269,14 +271,33 @@ def drop_objects(objects, seconds=3.0, bounciness=0.25, friction=0.6, keep_anima
             "seconds": seconds, "tip": "Objects must start above where they should land, not overlapping."}
 
 
+CORNERS = {"front_left": (-1, -1), "front_right": (1, -1), "back_left": (-1, 1), "back_right": (1, 1)}
+
+
 @command()
-def drape_cloth(over=None, name="Cloth", size=None, color="#b9c4d6", drop_height=None, seconds=2.5):
-    """Drop a sheet of fabric onto objects and keep the folded result as an ordinary object."""
+def drape_cloth(over=None, name="Cloth", size=None, color="#b9c4d6", drop_height=None, seconds=2.5, at=None):
+    """Drop a sheet of fabric onto objects and keep the folded result as an ordinary object.
+    at places the middle of the sheet: a corner of the objects (front_left, back_right, ...) or [x, y]."""
     from .materials import build_material
     scene = bpy.context.scene
     targets = [o for o in util.require_subjects(over) if o.type == "MESH"]
     lo, hi, center, radius = util.bounds(targets)
-    width = float(size) if size else max(hi.x - lo.x, hi.y - lo.y) * 1.9
+    span = min(hi.x - lo.x, hi.y - lo.y)
+    if isinstance(at, str):
+        key = at.lower().replace(" ", "_").replace("-", "_")
+        if key not in CORNERS and key not in ("center", "centre"):
+            raise ValueError(f"Unknown place '{at}'. Use one of {', '.join(CORNERS)}, center, or [x, y].")
+        width = float(size) if size else span * 0.8
+        if key in CORNERS:
+            # Centre the sheet a little inside the corner so it hangs down over both edges.
+            sx, sy = CORNERS[key]
+            inset = width * 0.3
+            center = Vector((hi.x - inset if sx > 0 else lo.x + inset, hi.y - inset if sy > 0 else lo.y + inset,
+                             center.z))
+    else:
+        width = float(size) if size else max(hi.x - lo.x, hi.y - lo.y) * 1.9
+        if at is not None:
+            center = Vector((float(at[0]), float(at[1]), center.z))
     colliders = targets + [o for o in _colliders(targets) if o not in targets]
     ground = None
     if not bpy.data.collections.get(util.BACKDROP) or not bpy.data.collections[util.BACKDROP].objects:
@@ -293,7 +314,7 @@ def drape_cloth(over=None, name="Cloth", size=None, color="#b9c4d6", drop_height
     scene.collection.objects.link(cloth)
 
     sim = cloth.modifiers.new("Cloth", "CLOTH")
-    util.set_if(sim.settings, "quality", 8)
+    util.set_if(sim.settings, "quality", 12)
     util.set_if(sim.settings, "mass", 0.25)
     util.set_if(sim.settings, "bending_stiffness", 0.4)
     sim.collision_settings.use_collision = True
@@ -307,7 +328,7 @@ def drape_cloth(over=None, name="Cloth", size=None, color="#b9c4d6", drop_height
         if not any(m.type == "COLLISION" for m in obj.modifiers):
             added.append((obj, obj.modifiers.new("Studio Collision", "COLLISION")))
         obj.collision.thickness_outer = max(radius * 0.01, 0.001)
-        obj.collision.cloth_friction = 12
+        obj.collision.cloth_friction = 40
     current = scene.frame_current
     for frame in range(1, frames + 2):
         scene.frame_set(frame)

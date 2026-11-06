@@ -34,7 +34,7 @@ Never finish without looking at a render. design_guide has optional craft tips.
 Units are metres, Z is up, the front of the scene faces -Y. Every change can be reversed with undo."""
 
 Names = Optional[Union[str, list[str]]]
-Color = Optional[Union[str, list[float]]]
+Color = Optional[Union[str, list[Union[float, str]]]]
 
 mcp = FastMCP("blender-studio", instructions=INSTRUCTIONS)
 blender = Blender()
@@ -160,7 +160,7 @@ def apply_material(
     assignments: Optional[list[dict]] = None,
 ) -> dict:
     """Give objects a realistic surface from a preset (see list_presets: ceramic, plastic_glossy, gold, glass,
-    wood, fabric, glow and more). color is '#rrggbb'; leave it out for the natural colour.
+    wood, fabric, cloud, glow and more). color is '#rrggbb'; leave it out for the natural colour.
     To set many at once, pass assignments=[{"objects": [...], "preset": "...", "color": "..."}, ...]
     instead; each entry takes the same fields."""
     jobs = assignments or [dict(objects=objects, preset=preset, color=color, roughness=roughness,
@@ -265,6 +265,8 @@ def _render(quality, **args):
     summary = {"saved_to": result["path"], "engine": result["engine"], "size": result["size"]}
     if notes:
         summary["exposure_warnings"] = notes
+    if "note" in result:
+        summary["note"] = result["note"]
     return [_jpeg(image), json.dumps(summary)]
 
 
@@ -304,7 +306,7 @@ def render_animation(
     cell_w = 420
     cell_h = round(cell_w * first.height / first.width)
     strip = _sheet([(f"{s['seconds']}s", s["path"]) for s in result["stills"]], 3, cell_w, cell_h)
-    summary = {key: result[key] for key in ("path", "engine", "seconds", "frames", "fps")}
+    summary = {key: result[key] for key in ("path", "engine", "seconds", "frames", "fps", "note") if key in result}
     return [_jpeg(strip, 1280), json.dumps({"video_saved_to": summary.pop("path"), **summary})]
 
 
@@ -350,17 +352,22 @@ def create_terrain(
     island: bool = False,
     seed: int = 0,
     location: Optional[list[float]] = None,
+    shape: Literal["rolling", "hill", "slope"] = "rolling",
+    rocky: float = 0.0,
 ) -> dict:
-    """Make hilly ground `size` metres wide with hills up to `height` metres. detail above 1 gives more,
-    smaller hills. island=True makes the land fall away to zero at the edges. Each seed is a different landscape."""
+    """Make ground `size` metres wide, up to `height` metres high. shape: 'rolling' gentle hills all over,
+    'hill' one big rise behind the centre (a hillside), 'slope' ground rising from front to back. rocky 0-1
+    adds craggy ledges. detail above 1 gives more, smaller bumps. island=True makes the land fall away at
+    the edges. Each seed is a different landscape."""
     return call("create_terrain", name=name, size=size, height=height, detail=detail, style=style, island=island,
-                seed=seed, location=location)
+                seed=seed, location=location, shape=shape, rocky=rocky)
 
 
 @mcp.tool()
 def create_blob(balls: list[list[float]], name: Optional[str] = None, location: Optional[list[float]] = None) -> dict:
     """Make one soft organic shape from spheres that melt together where they overlap: clouds, bodies,
-    blobby creatures, snowmen, dough. balls is [[x, y, z, radius], ...]; overlap them by a third or more."""
+    blobby creatures, snowmen, dough. balls is [[x, y, z, radius], ...]; overlap them by a third or more.
+    For clouds, give it the 'cloud' material so it looks soft rather than like plastic."""
     return call("create_blob", balls=balls, name=name, location=location)
 
 
@@ -536,10 +543,13 @@ def drape_cloth(
     name: str = "Cloth",
     size: Optional[float] = None,
     color: str = "#b9c4d6",
+    at: Optional[Union[str, list[float]]] = None,
 ) -> dict:
     """Drop a sheet of fabric onto objects and keep the folds: tablecloths, covers, blankets, a reveal
-    sheet. It lands on the named objects (or everything) and the floor. size is the sheet's width in metres."""
-    return call("drape_cloth", over=over, name=name, size=size, color=color)
+    sheet. It lands on the named objects (or everything) and the floor. size is the sheet's width in metres.
+    at says where the middle of the sheet lands: a corner of the objects ('front_left', 'front_right',
+    'back_left', 'back_right', so it hangs over two edges), 'center', or [x, y]."""
+    return call("drape_cloth", over=over, name=name, size=size, color=color, at=at)
 
 
 @mcp.tool()

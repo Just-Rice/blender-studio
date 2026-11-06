@@ -31,7 +31,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from tasks import REGULAR, TASKS as SUITE  # noqa: E402
 
 TASKS = {name: task["brief"] for name, task in SUITE.items()}
-USAGE_LIMIT = 0.8      # stop starting new runs once the Claude plan's usage window is this full
+USAGE_LIMIT = float(os.environ.get("BENCH_USAGE_LIMIT", 0.8))  # stop starting new runs once the usage window is this full
 SYSTEM = ("You are a 3D artist working in Blender through the tools provided. Make the picture the user asks "
           "for; you cannot ask the user anything. Look at a render of your work and improve it until you are "
           "satisfied. Your last render is taken as the finished picture. Finish with one sentence describing it.")

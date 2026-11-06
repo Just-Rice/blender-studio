@@ -70,6 +70,26 @@ def _configure(scene, engine, samples):
     return "EEVEE"
 
 
+def _has_glass(scene):
+    """True when something visible is see-through (glass, water, clear liquid)."""
+    for obj in scene.objects:
+        if obj.type != "MESH" or obj.hide_render:
+            continue
+        for slot in obj.material_slots:
+            tree = slot.material.node_tree if slot.material and slot.material.use_nodes else None
+            for node in tree.nodes if tree else ():
+                socket = node.inputs.get("Transmission Weight") if node.type == "BSDF_PRINCIPLED" else None
+                if (socket is not None and socket.default_value > 0.5) or node.type in ("BSDF_GLASS",
+                                                                                      "BSDF_REFRACTION"):
+                    return True
+    return False
+
+
+# EEVEE cannot see through one glass surface into another, so a bottle of liquid previews as a dark
+# solid. Previews of scenes with glass use Cycles at a few samples instead, which shows it truly.
+GLASS_PREVIEW_SAMPLES = {"draft": 16, "preview": 48}
+
+
 def _write(scene, path):
     settings = scene.render.image_settings
     util.set_if(settings, "media_type", "IMAGE")
@@ -79,16 +99,29 @@ def _write(scene, path):
     bpy.ops.render.render(write_still=True)
 
 
+def _ensure_camera(scene):
+    """With no camera yet, frame one on the whole scene instead of failing, and say so."""
+    if scene.camera is not None:
+        return {}
+    from .camera import frame_camera
+    frame_camera()
+    return {"note": "There was no camera, so one was framed on the whole scene. Use frame_camera to change it."}
+
+
 @command(mutates=False)
 def render(quality="preview", path=None, engine=None, samples=None, transparent=False, at_seconds=None):
     quality = quality.lower()
     if quality not in QUALITY:
         raise ValueError(f"Unknown quality '{quality}'. Choose from: {', '.join(QUALITY)}")
     scene = bpy.context.scene
-    if scene.camera is None:
-        raise ValueError("There is no camera yet. Call frame_camera first.")
+    note = _ensure_camera(scene)
     spec = QUALITY[quality]
-    used = _configure(scene, (engine or spec["engine"]).lower(), samples or spec["samples"])
+    engine, samples = (engine or spec["engine"]).lower(), samples or spec["samples"]
+    if engine == "eevee" and quality in GLASS_PREVIEW_SAMPLES and _has_glass(scene):
+        engine, samples = "cycles", GLASS_PREVIEW_SAMPLES[quality]
+        note = {"note": " ".join(filter(None, [note.get("note"), "Glass in the scene, so this preview used the "
+                                               "realistic renderer to show it truly."]))}
+    used = _configure(scene, engine, samples)
     scene.render.resolution_percentage = spec["percent"]
     scene.render.film_transparent = bool(transparent)
     path = path or state.render_path(quality)
@@ -100,7 +133,7 @@ def render(quality="preview", path=None, engine=None, samples=None, transparent=
         scene.render.resolution_percentage = 100
     return {"path": path, "engine": used, "quality": quality,
             "size": [scene.render.resolution_x * spec["percent"] // 100,
-                     scene.render.resolution_y * spec["percent"] // 100]}
+                     scene.render.resolution_y * spec["percent"] // 100], **note}
 
 
 @command(mutates=False)
@@ -143,10 +176,9 @@ def render_animation(path=None, quality="draft", seconds=None, start_seconds=0.0
     if quality not in QUALITY:
         raise ValueError(f"Unknown quality '{quality}'. Choose from: {', '.join(QUALITY)}")
     scene = bpy.context.scene
-    if scene.camera is None:
-        raise ValueError("There is no camera yet. Call frame_camera first.")
     if not scene.get("studio_animated") or scene.frame_end <= 1:
         raise ValueError("Nothing is animated yet. Use animate, animate_character, drop_objects or play_animation.")
+    note = _ensure_camera(scene)
     spec = QUALITY[quality]
     first = util.to_frame(start_seconds)
     last = util.to_frame(start_seconds + seconds) if seconds else scene.frame_end
@@ -184,4 +216,4 @@ def render_animation(path=None, quality="draft", seconds=None, start_seconds=0.0
          render.resolution_percentage, render.filepath, render.film_transparent) = saved
         scene.frame_set(frame_current)
     return {"path": path, "engine": used, "seconds": round((last - first + 1) / util.fps(), 2),
-            "frames": last - first + 1, "fps": round(util.fps(), 2), "stills": stills}
+            "frames": last - first + 1, "fps": round(util.fps(), 2), "stills": stills, **note}

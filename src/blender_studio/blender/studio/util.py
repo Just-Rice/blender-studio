@@ -144,6 +144,8 @@ def rgba(color, default=(0.8, 0.8, 0.8, 1.0)):
     """Accept '#rrggbb' or [r, g, b] (0-1, sRGB as picked on screen) and return linear RGBA."""
     if color is None:
         return tuple(default)
+    if isinstance(color, (list, tuple)) and len(color) == 1 and isinstance(color[0], str):
+        color = color[0]
     if isinstance(color, str):
         text = color.lstrip("#")
         if len(text) == 3:
