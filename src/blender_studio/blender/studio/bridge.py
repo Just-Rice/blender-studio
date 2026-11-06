@@ -43,7 +43,21 @@ def _handle(line):
             "error": f"{type(exc).__name__}: {exc}",
             "traceback": traceback.format_exc(limit=6),
         }
-    return json.dumps(response, default=str).encode()
+    try:
+        return json.dumps(response, default=str).encode()
+    except (TypeError, ValueError):
+        # A result JSON cannot hold as it is (e.g. tuple keys from run_python): reply with a safe copy
+        # rather than letting the error take Blender down with it.
+        return json.dumps(_plain(response), default=str).encode()
+
+
+def _plain(value):
+    if isinstance(value, dict):
+        return {k if isinstance(k, (str, int, float, bool)) or k is None else str(k): _plain(v)
+                for k, v in value.items()}
+    if isinstance(value, (list, tuple, set)):
+        return [_plain(v) for v in value]
+    return value
 
 
 def _pump_timer():

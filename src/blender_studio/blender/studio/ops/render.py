@@ -128,7 +128,17 @@ def render(quality="preview", path=None, engine=None, samples=None, transparent=
     if at_seconds is not None:
         scene.frame_set(util.to_frame(at_seconds))
     try:
-        _write(scene, path)
+        try:
+            _write(scene, path)
+        except RuntimeError as error:
+            # A heavy scene can exhaust the graphics card's memory; the CPU is slower but has more.
+            if scene.render.engine != "CYCLES" or scene.cycles.device != "GPU" or "emory" not in str(error):
+                raise
+            scene.cycles.device = "CPU"
+            _write(scene, path)
+            used = "Cycles on CPU"
+            note = {"note": " ".join(filter(None, [note.get("note"), "The graphics card ran out of memory, so this "
+                                                   "render used the CPU instead."]))}
     finally:
         scene.render.resolution_percentage = 100
     return {"path": path, "engine": used, "quality": quality,

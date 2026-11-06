@@ -1,0 +1,224 @@
+{
+ "pairs": 32,
+ "wins": {
+  "studio": 21,
+  "tie": 4,
+  "plain": 7
+ },
+ "mean": {
+  "plain": 4.3125,
+  "studio": 5.609375
+ },
+ "checklist": {
+  "plain": 0.73203125,
+  "studio": 0.8067708333333333
+ },
+ "by_model": {
+  "claude-haiku-4-5-20251001": {
+   "plain": 1.3125,
+   "studio": 4.125,
+   "studio_wins": 8,
+   "pairs": 8,
+   "checklist_plain": 0.14375,
+   "checklist_studio": 0.6208333333333333
+  },
+  "claude-haiku-5-5": {
+   "plain": 4.6875,
+   "studio": 5.75,
+   "studio_wins": 5,
+   "pairs": 8,
+   "checklist_plain": 0.909375,
+   "checklist_studio": 0.8083333333333333
+  },
+  "claude-opus-5-5": {
+   "plain": 6.5,
+   "studio": 6.625,
+   "studio_wins": 3,
+   "pairs": 8,
+   "checklist_plain": 0.984375,
+   "checklist_studio": 0.9375
+  },
+  "claude-sonnet-5-5": {
+   "plain": 4.75,
+   "studio": 5.9375,
+   "studio_wins": 5,
+   "pairs": 8,
+   "checklist_plain": 0.890625,
+   "checklist_studio": 0.8604166666666667
+  }
+ },
+ "by_task": {
+  "busstop": {
+   "plain": 4.125,
+   "studio": 6.125,
+   "studio_wins": 3,
+   "pairs": 4,
+   "checklist_plain": 0.825,
+   "checklist_studio": 0.8500000000000001
+  },
+  "cheese": {
+   "plain": 4.0,
+   "studio": 5.5,
+   "studio_wins": 3,
+   "pairs": 4,
+   "checklist_plain": 0.75,
+   "checklist_studio": 0.9166666666666666
+  },
+  "hillside": {
+   "plain": 4.125,
+   "studio": 4.375,
+   "studio_wins": 1,
+   "pairs": 4,
+   "checklist_plain": 0.59375,
+   "checklist_studio": 0.65625
+  },
+  "mug": {
+   "plain": 4.75,
+   "studio": 5.625,
+   "studio_wins": 3,
+   "pairs": 4,
+   "checklist_plain": 0.75,
+   "checklist_studio": 0.875
+  },
+  "perfume": {
+   "plain": 5.25,
+   "studio": 5.875,
+   "studio_wins": 2,
+   "pairs": 4,
+   "checklist_plain": 0.75,
+   "checklist_studio": 0.875
+  },
+  "reading": {
+   "plain": 3.875,
+   "studio": 7.0,
+   "studio_wins": 4,
+   "pairs": 4,
+   "checklist_plain": 0.8125,
+   "checklist_studio": 0.9375
+  },
+  "robot-video": {
+   "plain": 3.875,
+   "studio": 5.125,
+   "studio_wins": 2,
+   "pairs": 4,
+   "checklist_plain": 0.5625,
+   "checklist_studio": 0.75
+  },
+  "spill": {
+   "plain": 4.5,
+   "studio": 5.25,
+   "studio_wins": 3,
+   "pairs": 4,
+   "checklist_plain": 0.8125,
+   "checklist_studio": 0.59375
+  }
+ },
+ "versus": {},
+ "tools_used": {
+  "new_scene": 25,
+  "create_object": 42,
+  "create_character": 19,
+  "pose_character": 7,
+  "apply_material": 72,
+  "add_polish": 26,
+  "add_backdrop": 36,
+  "studio_lighting": 36,
+  "frame_camera": 60,
+  "render_preview": 127,
+  "transform_object": 51,
+  "scene_info": 7,
+  "scene_check": 10,
+  "set_look": 35,
+  "render_final": 30,
+  "run_python": 109,
+  "delete_objects": 10,
+  "contact_sheet": 2,
+  "create_terrain": 6,
+  "create_rock": 21,
+  "create_limbs": 5,
+  "create_blob": 17,
+  "animate": 1,
+  "sculpt": 7,
+  "render_animation": 8,
+  "clear_animation": 1,
+  "search_assets": 20,
+  "import_asset": 9,
+  "apply_texture": 11,
+  "animate_character": 12,
+  "drop_objects": 4,
+  "undo": 1,
+  "drape_cloth": 4,
+  "design_guide": 7,
+  "list_presets": 3
+ },
+ "tools_never_used": [
+  "boolean",
+  "create_human",
+  "export_model",
+  "import_model",
+  "list_animations",
+  "open_in_blender",
+  "play_animation",
+  "save_blend"
+ ],
+ "cost": {
+  "claude-haiku-4-5-20251001 plain": {
+   "cost_usd": 1.6096205999999997,
+   "input_tokens": 5139856.0,
+   "output_tokens": 102915.0,
+   "api_s": 951.0999999999999,
+   "wall_s": 16153.900000000001
+  },
+  "claude-haiku-4-5-20251001 studio": {
+   "cost_usd": 1.0879956999999998,
+   "input_tokens": 4004644.0,
+   "output_tokens": 49441.0,
+   "api_s": 551.8000000000001,
+   "wall_s": 5826.300000000001
+  },
+  "claude-haiku-5-5 plain": {
+   "cost_usd": 0.07834202000000001,
+   "input_tokens": 933186.0,
+   "output_tokens": 84316.0,
+   "api_s": 412.2,
+   "wall_s": 1341.3999999999999
+  },
+  "claude-haiku-5-5 studio": {
+   "cost_usd": 0.12741447,
+   "input_tokens": 3133956.0,
+   "output_tokens": 95069.0,
+   "api_s": 514.0999999999999,
+   "wall_s": 1866.0
+  },
+  "claude-opus-5-5 plain": {
+   "cost_usd": 3.2035324,
+   "input_tokens": 1300055.0,
+   "output_tokens": 81453.0,
+   "api_s": 759.3000000000001,
+   "wall_s": 9987.5
+  },
+  "claude-opus-5-5 studio": {
+   "cost_usd": 3.4277244,
+   "input_tokens": 2482058.0,
+   "output_tokens": 70032.0,
+   "api_s": 666.4000000000001,
+   "wall_s": 3599.2000000000003
+  },
+  "claude-sonnet-5-5 plain": {
+   "cost_usd": 0.47440109999999996,
+   "input_tokens": 202897.0,
+   "output_tokens": 20891.0,
+   "api_s": 158.8,
+   "wall_s": 1444.4999999999998
+  },
+  "claude-sonnet-5-5 studio": {
+   "cost_usd": 0.6673372999999999,
+   "input_tokens": 931208.0,
+   "output_tokens": 21887.0,
+   "api_s": 176.8,
+   "wall_s": 1328.8999999999999
+  }
+ },
+ "cycle": "cycle1",
+ "commit": "3bb90d6"
+}

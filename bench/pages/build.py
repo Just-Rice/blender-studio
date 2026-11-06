@@ -1,8 +1,9 @@
 """Build the comparison for the project site and the benchmark artifact from raw benchmark runs.
 
-    uv run python bench/pages/build.py RUNS_DIR ARTIFACT_OUT docs [bench/pages/text_v2.json]
+    uv run python bench/pages/build.py RUNS_DIR ARTIFACT_OUT docs [text.json [FIX_DIR]]
 
-Without text.json it only prints the facts, so the written summary can be based on them.
+Without text.json it only prints the facts, so the written summary can be based on them. FIX_DIR is the
+retest after the cycle's fixes: its versus.json compares each retested picture with the one before.
 """
 import html
 import json
@@ -98,7 +99,14 @@ def model_rows(model):
     return out
 
 
-def cards(prefix, folder):
+def spread(items, most):
+    """At most `most` items, evenly spaced, always keeping the first and the last."""
+    if len(items) <= most:
+        return list(items)
+    return [items[round(i * (len(items) - 1) / (most - 1))] for i in range(most)]
+
+
+def cards(prefix, folder, most_frames):
     folder.mkdir(parents=True, exist_ok=True)
     out = []
     for model, task in ALL:
@@ -107,7 +115,8 @@ def cards(prefix, folder):
         for arm in ARM:
             run = runs[(model, task, arm)]
             frames = []
-            for index, shot in enumerate(run.get("shots", []), 1):
+            shots = list(enumerate(run.get("shots", []), 1))
+            for index, shot in spread(shots, most_frames):
                 image = Image.open(run["dir"] / shot).convert("RGB")
                 image.thumbnail((560, 560))
                 name = f"v2-{slug}__{task}-{arm}-{index:02d}.jpg"
@@ -116,7 +125,7 @@ def cards(prefix, folder):
             mark = score(model, task, arm)
             picture = (f"<div class='show' data-frames='{','.join(frames)}'><img src='{frames[-1]}' loading='lazy' "
                        f"alt='{ARM[arm]} renders for {TASKS[task]} by {NAME[model]}, from first to final'>"
-                       f"<span class='count'>Render {len(frames)} of {len(frames)}</span></div>") if frames else \
+                       f"<span class='count'>Render {len(shots)} of {len(shots)}</span></div>") if frames else \
                 "<div class='show none'>No picture was produced</div>"
             stop = {"error_max_turns": "it used all 40 turns", "turn limit": "it used all 9 turns"}.get(
                 run.get("stop"), str(run.get("stop") or run.get("crashed")))
@@ -163,19 +172,60 @@ def charts():
     return "\n".join(figures)
 
 
-# Averages on the original three requests (mug, campsite, robot): round 1, with the tools as they were,
-# and round 2, after the fixes. (plain round 1, tools round 1, plain round 2, tools round 2)
+# Earlier rounds on the original three requests (mug, campsite, robot), for the record:
+# (plain round 1, tools round 1, plain round 2, tools round 2)
 ROUNDS = {"claude-haiku-4-5-20251001": (1.5, 4.0, 1.8, 4.0), "claude-haiku-5-5": (5.5, 5.3, 4.8, 6.3),
           "claude-sonnet-5-5": (5.5, 6.7, 4.8, 5.7), "claude-opus-5-5": (7.7, 6.8, 7.2, 8.3)}
+fix_dir = Path(sys.argv[5]) if len(sys.argv) > 5 else None
+fix_runs, versus = {}, {}
+if fix_dir:
+    for path in sorted(fix_dir.glob("*/metrics.json")):
+        m = json.loads(path.read_text())
+        fix_runs[(m["model"], m["task"])] = m | {"dir": path.parent}
+    versus = json.loads((fix_dir / "versus.json").read_text())
+RETESTED = [(m, t) for m in NAME for t in TASKS if f"{m}__{t}" in versus and versus[f"{m}__{t}"].get("scores")]
 
 
-def before_after():
+def earlier_rounds():
     body = "".join(f"<tr><th scope='row'>{NAME[m]}</th>" + "".join(f"<td>{v:.1f}</td>" for v in values) + "</tr>"
                    for m, values in ROUNDS.items())
-    return ("<div class='scroll'><table><thead><tr><th scope='col'>Judge's average, of 10, first three requests</th>"
-            "<th scope='col'>Plain, round 1</th><th scope='col'>Tools, round 1</th>"
+    return ("<div class='scroll'><table><thead><tr><th scope='col'>Earlier rounds: judge's average, of 10, on the "
+            "first three requests</th><th scope='col'>Plain, round 1</th><th scope='col'>Tools, round 1</th>"
             "<th scope='col'>Plain, round 2</th><th scope='col'>Tools, round 2</th></tr></thead>"
             f"<tbody>{body}</tbody></table></div>")
+
+
+def retest_table():
+    body = ""
+    for m, t in RETESTED:
+        v = versus[f"{m}__{t}"]
+        won = {"after": "After the fix", "before": "Before the fix"}.get(v["winner"], "Tie")
+        body += (f"<tr><th scope='row'>{NAME[m]}<span>{TASKS[t]}</span></th>"
+                 f"<td>{v['scores']['before']['overall']:.1f}</td><td>{v['scores']['after']['overall']:.1f}</td>"
+                 f"<td>{100 * (v['checklist'].get('before') or 0):.0f}%</td>"
+                 f"<td>{100 * (v['checklist'].get('after') or 0):.0f}%</td><td>{won}</td></tr>")
+    return ("<div class='scroll'><table><thead><tr><th scope='col'>Retested with the fixed tools</th>"
+            "<th scope='col'>Score before</th><th scope='col'>Score after</th><th scope='col'>Checklist before</th>"
+            "<th scope='col'>Checklist after</th><th scope='col'>Judged better</th></tr></thead>"
+            f"<tbody>{body}</tbody></table></div>")
+
+
+def trio_images(folder):
+    """Plain, tools before the fix and tools after it, for each retested pair."""
+    folder.mkdir(parents=True, exist_ok=True)
+    names = {}
+    for m, t in RETESTED:
+        slug = m.replace(".", "-")
+        for key, run in (("plain", runs[(m, t, "plain")]), ("before", runs[(m, t, "studio")]),
+                         ("after", fix_runs[(m, t)])):
+            if not run.get("shots"):
+                continue
+            image = Image.open(run["dir"] / run["shots"][-1]).convert("RGB")
+            image.thumbnail((560, 560))
+            name = f"fix-{slug}__{t}-{key}.jpg"
+            image.save(folder / name, quality=80)
+            names[(m, t, key)] = name
+    return names
 
 
 facts = {"pairs": len(PAIRS), "unscored": UNSCORED, "wins": wins, "mean": mean,
@@ -195,26 +245,30 @@ text = json.loads(Path(sys.argv[4]).read_text())
 rows = "".join(model_rows(m) for m in MODELS)
 
 
-def fixes(prefix, tag_open, plain_lists):
+def fixes(prefix, tag_open, plain_lists, names):
     ul = "<ul>" if plain_lists else '<ul class="plain">'
     trio = ""
-    for task, name in TASKS.items():
-        trio += (f"<article class='card'><h3>Claude Opus 5.5 <span>{name}</span></h3><div class='trio'>"
+    for m, t in RETESTED:
+        trio += (f"<article class='card'><h3>{NAME[m]} <span>{TASKS[t]}</span></h3><div class='trio'>"
                  + "".join(f"<div class='side'><h4><i class='dot {dot}'></i>{label}</h4><div class='show'>"
-                           f"<img src='{prefix}fix-{task}-{key}.jpg' loading='lazy' alt='Opus {label.lower()} for {name}'></div></div>"
-                           for key, label, dot in (("plain", "Plain Blender", "plain"), ("before", "Tools, first round", "studio"),
-                                                   ("after", "Tools, after the fixes", "studio")))
+                           + (f"<img src='{prefix}{names[(m, t, key)]}' loading='lazy' alt='{label} for {TASKS[t]} "
+                              f"by {NAME[m]}'>" if (m, t, key) in names else "No picture")
+                           + "</div></div>"
+                           for key, label, dot in (("plain", "Plain Blender", "plain"),
+                                                   ("before", "Tools, before the fix", "studio"),
+                                                   ("after", "Tools, after the fix", "studio")))
                  + "</div></article>")
     return f"""{tag_open}
     <div class="stack" style="display:flex;flex-direction:column;gap:20px">
-      <h2>What changed between the two rounds.</h2>
+      <h2>{text['fix_heading']}</h2>
       <p>{text['fix_intro']}</p>
       {ul}
 {chr(10).join('        <li>' + item + '</li>' for item in text['fix_list'])}
       </ul>
-      {before_after()}
+      {retest_table() if RETESTED else ''}
       <p class="note">{text['fix_note']}</p>
       <div class="cards">{trio}</div>
+      {earlier_rounds()}
     </div>
   </section>
 """
@@ -230,7 +284,7 @@ page = (HERE / "artifact_shell.html").read_text()
 page = page[:page.index("<tbody>") + 7] + rows + page[page.index("</tbody>"):]
 start = page.index("<div class=\"cards\">") + len("<div class=\"cards\">")
 end = page.index("</div>\n  </section>\n\n  <section>\n    <h2>Run by run")
-page = page[:start] + "\n" + cards("", out_artifact) + "\n    " + page[end:]
+page = page[:start] + "\n" + cards("", out_artifact, 3) + "\n    " + page[end:]
 start = page.index("<div class=\"charts\">") + len("<div class=\"charts\">")
 end = page.index("</div>\n  </section>\n\n  <section>\n    <h2>How it was run")
 page = page[:start] + "\n" + charts() + "\n    " + page[end:]
@@ -244,17 +298,15 @@ for heading, items in (("<h2>How it was run</h2>", text["method"]), ("<h2>What t
     end = page.index("</ul>", start) + 5
     page = page[:start] + "<ul>\n" + "\n".join(f"      <li>{c}</li>" for c in items) + "\n    </ul>" + page[end:]
 anchor = "  <section>\n    <h2>Run by run</h2>"
-page = page.replace(anchor, fixes("", "  <section>", True) + "\n" + anchor)
+page = page.replace(anchor, fixes("", "  <section>", True, trio_images(out_artifact)) + "\n" + anchor)
 page = page.replace("</style>", TRIO_CSS + "main > *, section > * { min-width: 0; }\n</style>", 1)
 assert "{{" not in page
 (out_artifact / "blender-benchmark.html").write_text(page)
-for image in HERE.glob("fix-*.jpg"):
-    (out_artifact / image.name).write_bytes(image.read_bytes())
 
 # ---- site ---------------------------------------------------------------
 bench = site_docs / "bench"
 site = (HERE / "site_template.html").read_text()
-values = {"{{SUMMARY_ROWS}}": rows, "{{CARDS}}": cards("bench/", bench), "{{SHORT}}": text["short"],
+values = {"{{SUMMARY_ROWS}}": rows, "{{CARDS}}": cards("bench/", bench, 4), "{{SHORT}}": text["short"],
           "{{SHOWS}}": "\n".join(f"            <li>{f}</li>" for f in text["findings"]),
           "{{NOT_SHOWN}}": "\n".join(f"            <li>{c}</li>" for c in text["caveats"]),
           "{{CARD_NOTE}}": text["card_note"], "{{COMPARE_INTRO}}": text["intro"],
@@ -263,7 +315,7 @@ for key, value in values.items():
     assert key in site, key
     site = site.replace(key, value)
 anchor = '  <section id="gemini">'
-site = site.replace(anchor, fixes("bench/", '  <section id="fixes">', False) + "\n" + anchor)
+site = site.replace(anchor, fixes("bench/", '  <section id="fixes">', False, trio_images(bench)) + "\n" + anchor)
 site = site.replace("</style>", TRIO_CSS + "</style>", 1)
 assert "{{" not in site
 (site_docs / "index.html").write_text(site)

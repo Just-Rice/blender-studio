@@ -160,7 +160,7 @@ def apply_material(
     assignments: Optional[list[dict]] = None,
 ) -> dict:
     """Give objects a realistic surface from a preset (see list_presets: ceramic, plastic_glossy, gold, glass,
-    wood, fabric, cloud, glow and more). color is '#rrggbb'; leave it out for the natural colour.
+    wood, fabric, glow and more). color is '#rrggbb'; leave it out for the natural colour.
     To set many at once, pass assignments=[{"objects": [...], "preset": "...", "color": "..."}, ...]
     instead; each entry takes the same fields."""
     jobs = assignments or [dict(objects=objects, preset=preset, color=color, roughness=roughness,
@@ -352,22 +352,17 @@ def create_terrain(
     island: bool = False,
     seed: int = 0,
     location: Optional[list[float]] = None,
-    shape: Literal["rolling", "hill", "slope"] = "rolling",
-    rocky: float = 0.0,
 ) -> dict:
-    """Make ground `size` metres wide, up to `height` metres high. shape: 'rolling' gentle hills all over,
-    'hill' one big rise behind the centre (a hillside), 'slope' ground rising from front to back. rocky 0-1
-    adds craggy ledges. detail above 1 gives more, smaller bumps. island=True makes the land fall away at
-    the edges. Each seed is a different landscape."""
+    """Make hilly ground `size` metres wide with hills up to `height` metres. detail above 1 gives more,
+    smaller hills. island=True makes the land fall away to zero at the edges. Each seed is a different landscape."""
     return call("create_terrain", name=name, size=size, height=height, detail=detail, style=style, island=island,
-                seed=seed, location=location, shape=shape, rocky=rocky)
+                seed=seed, location=location)
 
 
 @mcp.tool()
 def create_blob(balls: list[list[float]], name: Optional[str] = None, location: Optional[list[float]] = None) -> dict:
     """Make one soft organic shape from spheres that melt together where they overlap: clouds, bodies,
-    blobby creatures, snowmen, dough. balls is [[x, y, z, radius], ...]; overlap them by a third or more.
-    For clouds, give it the 'cloud' material so it looks soft rather than like plastic."""
+    blobby creatures, snowmen, dough. balls is [[x, y, z, radius], ...]; overlap them by a third or more."""
     return call("create_blob", balls=balls, name=name, location=location)
 
 

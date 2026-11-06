@@ -1,0 +1,1198 @@
+{
+ "claude-haiku-4-5-20251001__hillside": {
+  "model": "claude-haiku-4-5-20251001",
+  "task": "hillside",
+  "judge": "claude-opus-5-5",
+  "scores": {
+   "before": {
+    "request": 4.5,
+    "composition": 4.5,
+    "lighting": 4.5,
+    "materials": 3.5,
+    "overall": 3.5
+   },
+   "after": {
+    "request": 3.0,
+    "composition": 4.0,
+    "lighting": 5.0,
+    "materials": 4.0,
+    "overall": 3.0
+   }
+  },
+  "checklist": {
+   "before": 0.875,
+   "after": 0.25
+  },
+  "wins": {
+   "before": 2,
+   "after": 0,
+   "tie": 0
+  },
+  "winner": "before",
+  "verdicts": [
+   {
+    "checklist": {
+     "first": [
+      false,
+      true,
+      true,
+      true
+     ],
+     "second": [
+      false,
+      false,
+      false,
+      true
+     ]
+    },
+    "first": {
+     "request": 4,
+     "composition": 4,
+     "lighting": 4,
+     "materials": 3,
+     "overall": 3
+    },
+    "second": {
+     "request": 3,
+     "composition": 4,
+     "lighting": 5,
+     "materials": 4,
+     "overall": 3
+    },
+    "better": "first",
+    "reason": "Neither shows a real hillside and both look like small terrain tiles floating in a void, but the first more clearly has several boulders, a gnarled tree trunk and drifting clouds, while the second's warmer light can't make up for having only two small rocks and a tree hidden behind a cloud.",
+    "first_was": "before",
+    "second_was": "after"
+   },
+   {
+    "checklist": {
+     "first": [
+      false,
+      false,
+      false,
+      true
+     ],
+     "second": [
+      true,
+      true,
+      true,
+      true
+     ]
+    },
+    "first": {
+     "request": 3,
+     "composition": 4,
+     "lighting": 5,
+     "materials": 4,
+     "overall": 3
+    },
+    "second": {
+     "request": 5,
+     "composition": 5,
+     "lighting": 5,
+     "materials": 4,
+     "overall": 4
+    },
+    "better": "second",
+    "reason": "The second picture has rugged rising ground, several boulders and a knotted trunk, even with its floating rocks and the stray white panel in the corner, while the first is a nearly flat tile with two small rocks and a forked stick half-hidden behind its clouds.",
+    "first_was": "after",
+    "second_was": "before"
+   }
+  ]
+ },
+ "claude-haiku-4-5-20251001__perfume": {
+  "model": "claude-haiku-4-5-20251001",
+  "task": "perfume",
+  "judge": "claude-opus-5-5",
+  "scores": {
+   "before": {
+    "request": 7.0,
+    "composition": 4.5,
+    "lighting": 7.0,
+    "materials": 7.0,
+    "overall": 6.0
+   },
+   "after": {
+    "request": 7.0,
+    "composition": 6.0,
+    "lighting": 4.5,
+    "materials": 5.0,
+    "overall": 5.0
+   }
+  },
+  "checklist": {
+   "before": 1.0,
+   "after": 1.0
+  },
+  "wins": {
+   "before": 2,
+   "after": 0,
+   "tie": 0
+  },
+  "winner": "before",
+  "verdicts": [
+   {
+    "checklist": {
+     "first": [
+      true,
+      true,
+      true
+     ],
+     "second": [
+      true,
+      true,
+      true
+     ]
+    },
+    "first": {
+     "request": 7,
+     "composition": 4,
+     "lighting": 7,
+     "materials": 7,
+     "overall": 6
+    },
+    "second": {
+     "request": 7,
+     "composition": 6,
+     "lighting": 4,
+     "materials": 5,
+     "overall": 5
+    },
+    "better": "first",
+    "reason": "The first picture's glass looks more convincing and more luxurious, with strong refraction, amber liquid and good reflections, even though its cap is cropped off at the top; the second shows the whole bottle but is flat, low-contrast and generic, white glass on a white background.",
+    "first_was": "before",
+    "second_was": "after"
+   },
+   {
+    "checklist": {
+     "first": [
+      true,
+      true,
+      true
+     ],
+     "second": [
+      true,
+      true,
+      true
+     ]
+    },
+    "first": {
+     "request": 7,
+     "composition": 6,
+     "lighting": 5,
+     "materials": 5,
+     "overall": 5
+    },
+    "second": {
+     "request": 7,
+     "composition": 5,
+     "lighting": 7,
+     "materials": 7,
+     "overall": 6
+    },
+    "better": "second",
+    "reason": "The second has much richer glass, with real refraction and amber perfume inside, even though its chrome cap is cut off at the top, while the first shows the whole bottle but is flat and low-contrast with an awkward spike cap and empty-looking glass.",
+    "first_was": "after",
+    "second_was": "before"
+   }
+  ]
+ },
+ "claude-haiku-4-5-20251001__spill": {
+  "model": "claude-haiku-4-5-20251001",
+  "task": "spill",
+  "judge": "claude-opus-5-5",
+  "scores": {
+   "before": {
+    "request": 2.5,
+    "composition": 4.0,
+    "lighting": 5.0,
+    "materials": 4.0,
+    "overall": 2.5
+   },
+   "after": {
+    "request": 4.0,
+    "composition": 6.0,
+    "lighting": 5.0,
+    "materials": 4.0,
+    "overall": 4.0
+   }
+  },
+  "checklist": {
+   "before": 0.0,
+   "after": 0.25
+  },
+  "wins": {
+   "before": 0,
+   "after": 2,
+   "tie": 0
+  },
+  "winner": "after",
+  "verdicts": [
+   {
+    "checklist": {
+     "first": [
+      true,
+      false,
+      false,
+      false
+     ],
+     "second": [
+      false,
+      false,
+      false,
+      false
+     ]
+    },
+    "first": {
+     "request": 4,
+     "composition": 6,
+     "lighting": 5,
+     "materials": 4,
+     "overall": 4
+    },
+    "second": {
+     "request": 2,
+     "composition": 4,
+     "lighting": 5,
+     "materials": 4,
+     "overall": 2
+    },
+    "better": "first",
+    "reason": "The first picture shows a recognisable table with legs and many blocks, though they sit upright in a near-grid and some overlap, while the second shows only a legless slab with a few clustered blocks and a cloth draped over a big box instead of over the table's corner.",
+    "first_was": "after",
+    "second_was": "before"
+   },
+   {
+    "checklist": {
+     "first": [
+      false,
+      false,
+      false,
+      false
+     ],
+     "second": [
+      true,
+      false,
+      false,
+      false
+     ]
+    },
+    "first": {
+     "request": 3,
+     "composition": 4,
+     "lighting": 5,
+     "materials": 4,
+     "overall": 3
+    },
+    "second": {
+     "request": 4,
+     "composition": 6,
+     "lighting": 5,
+     "materials": 4,
+     "overall": 4
+    },
+    "better": "second",
+    "reason": "The second picture at least shows a real table with legs, a better-filled frame and a cloth hanging off the front edge, but both fail the brief: the blocks sit upright in neat clusters or a grid (the second's even intersect), and in both the cloth covers a box or block instead of draping over a table corner in folds.",
+    "first_was": "before",
+    "second_was": "after"
+   }
+  ]
+ },
+ "claude-haiku-5-5__hillside": {
+  "model": "claude-haiku-5-5",
+  "task": "hillside",
+  "judge": "claude-opus-5-5",
+  "scores": {
+   "before": {
+    "request": 5.5,
+    "composition": 5.0,
+    "lighting": 4.5,
+    "materials": 4.5,
+    "overall": 4.0
+   },
+   "after": {
+    "request": 5.5,
+    "composition": 5.0,
+    "lighting": 6.0,
+    "materials": 4.5,
+    "overall": 4.0
+   }
+  },
+  "checklist": {
+   "before": 0.625,
+   "after": 0.75
+  },
+  "wins": {
+   "before": 1,
+   "after": 1,
+   "tie": 0
+  },
+  "winner": "tie",
+  "verdicts": [
+   {
+    "checklist": {
+     "first": [
+      false,
+      true,
+      false,
+      true
+     ],
+     "second": [
+      true,
+      true,
+      false,
+      true
+     ]
+    },
+    "first": {
+     "request": 5,
+     "composition": 5,
+     "lighting": 5,
+     "materials": 4,
+     "overall": 4
+    },
+    "second": {
+     "request": 6,
+     "composition": 5,
+     "lighting": 6,
+     "materials": 5,
+     "overall": 4
+    },
+    "better": "second",
+    "reason": "The second picture shows a real rising hill topped with boulders and clear directional light, while the first is a flat, washed-out green field with a visible backdrop seam; but neither has a truly gnarled tree, and the second's jagged mesh edge and empty blue void hold it back.",
+    "first_was": "before",
+    "second_was": "after"
+   },
+   {
+    "checklist": {
+     "first": [
+      true,
+      true,
+      true,
+      false
+     ],
+     "second": [
+      false,
+      true,
+      true,
+      true
+     ]
+    },
+    "first": {
+     "request": 5,
+     "composition": 5,
+     "lighting": 6,
+     "materials": 4,
+     "overall": 4
+    },
+    "second": {
+     "request": 6,
+     "composition": 5,
+     "lighting": 4,
+     "materials": 5,
+     "overall": 4
+    },
+    "better": "second",
+    "reason": "Second has properly large, rocky-looking boulders and clouds set low and near the scene, but its ground is almost flat and washed out; first reads as a hill but is a smooth grassy cone with a jagged edge sitting in empty blue, with small rocks and clouds high overhead.",
+    "first_was": "after",
+    "second_was": "before"
+   }
+  ]
+ },
+ "claude-haiku-5-5__perfume": {
+  "model": "claude-haiku-5-5",
+  "task": "perfume",
+  "judge": "claude-opus-5-5",
+  "scores": {
+   "before": {
+    "request": 5.0,
+    "composition": 6.0,
+    "lighting": 6.0,
+    "materials": 4.0,
+    "overall": 4.0
+   },
+   "after": {
+    "request": 8.0,
+    "composition": 6.0,
+    "lighting": 6.5,
+    "materials": 7.0,
+    "overall": 6.5
+   }
+  },
+  "checklist": {
+   "before": 0.6666666666666666,
+   "after": 1.0
+  },
+  "wins": {
+   "before": 0,
+   "after": 2,
+   "tie": 0
+  },
+  "winner": "after",
+  "verdicts": [
+   {
+    "checklist": {
+     "first": [
+      true,
+      true,
+      true
+     ],
+     "second": [
+      false,
+      true,
+      true
+     ]
+    },
+    "first": {
+     "request": 8,
+     "composition": 6,
+     "lighting": 6,
+     "materials": 7,
+     "overall": 6
+    },
+    "second": {
+     "request": 5,
+     "composition": 6,
+     "lighting": 6,
+     "materials": 4,
+     "overall": 4
+    },
+    "better": "first",
+    "reason": "The first bottle clearly reads as transparent glass with refraction and a convincing chrome cap, though its blown-out highlights and tight centred crop hold it back; the second bottle looks like opaque, faceted pink plastic, despite having moodier spot lighting.",
+    "first_was": "after",
+    "second_was": "before"
+   },
+   {
+    "checklist": {
+     "first": [
+      false,
+      true,
+      true
+     ],
+     "second": [
+      true,
+      true,
+      true
+     ]
+    },
+    "first": {
+     "request": 5,
+     "composition": 6,
+     "lighting": 6,
+     "materials": 4,
+     "overall": 4
+    },
+    "second": {
+     "request": 8,
+     "composition": 6,
+     "lighting": 7,
+     "materials": 7,
+     "overall": 7
+    },
+    "better": "second",
+    "reason": "The second picture shows a convincing glass bottle with visible refraction and a bright chrome cap on a soft seamless backdrop, while the first bottle looks like opaque pink plastic, even with its moody spotlight.",
+    "first_was": "before",
+    "second_was": "after"
+   }
+  ]
+ },
+ "claude-haiku-5-5__spill": {
+  "model": "claude-haiku-5-5",
+  "task": "spill",
+  "judge": "claude-opus-5-5",
+  "scores": {
+   "before": {
+    "request": 4.0,
+    "composition": 6.0,
+    "lighting": 6.0,
+    "materials": 4.5,
+    "overall": 3.5
+   },
+   "after": {
+    "request": 8.0,
+    "composition": 7.0,
+    "lighting": 7.0,
+    "materials": 6.5,
+    "overall": 7.0
+   }
+  },
+  "checklist": {
+   "before": 0.375,
+   "after": 1.0
+  },
+  "wins": {
+   "before": 0,
+   "after": 2,
+   "tie": 0
+  },
+  "winner": "after",
+  "verdicts": [
+   {
+    "checklist": {
+     "first": [
+      true,
+      true,
+      true,
+      true
+     ],
+     "second": [
+      true,
+      false,
+      false,
+      false
+     ]
+    },
+    "first": {
+     "request": 8,
+     "composition": 7,
+     "lighting": 7,
+     "materials": 6,
+     "overall": 7
+    },
+    "second": {
+     "request": 4,
+     "composition": 6,
+     "lighting": 6,
+     "materials": 4,
+     "overall": 3
+    },
+    "better": "first",
+    "reason": "The first picture shows a real spill: blocks are tumbled across the table and floor, some lean on each other, and a soft folded cloth covers one corner, while the second has blocks lined up almost neatly and a stiff, flat sheet with no folds that splays strangely across the floor.",
+    "first_was": "after",
+    "second_was": "before"
+   },
+   {
+    "checklist": {
+     "first": [
+      true,
+      true,
+      false,
+      false
+     ],
+     "second": [
+      true,
+      true,
+      true,
+      true
+     ]
+    },
+    "first": {
+     "request": 4,
+     "composition": 6,
+     "lighting": 6,
+     "materials": 5,
+     "overall": 4
+    },
+    "second": {
+     "request": 8,
+     "composition": 7,
+     "lighting": 7,
+     "materials": 7,
+     "overall": 7
+    },
+    "better": "second",
+    "reason": "The second picture tells the story: an open box, blocks tumbled onto the floor and leaning on each other, and a cloth that bunches over the corner, while the first has blocks in near-even rows, a block floating in the air, and a stiff flat sheet with no folds that cuts into the floor.",
+    "first_was": "before",
+    "second_was": "after"
+   }
+  ]
+ },
+ "claude-opus-5-5__hillside": {
+  "model": "claude-opus-5-5",
+  "task": "hillside",
+  "judge": "claude-opus-5-5",
+  "scores": {
+   "before": {
+    "request": 6.0,
+    "composition": 5.5,
+    "lighting": 6.5,
+    "materials": 6.0,
+    "overall": 5.5
+   },
+   "after": {
+    "request": 8.0,
+    "composition": 7.0,
+    "lighting": 6.0,
+    "materials": 5.5,
+    "overall": 6.5
+   }
+  },
+  "checklist": {
+   "before": 0.75,
+   "after": 1.0
+  },
+  "wins": {
+   "before": 0,
+   "after": 2,
+   "tie": 0
+  },
+  "winner": "after",
+  "verdicts": [
+   {
+    "checklist": {
+     "first": [
+      false,
+      true,
+      true,
+      true
+     ],
+     "second": [
+      true,
+      true,
+      true,
+      true
+     ]
+    },
+    "first": {
+     "request": 6,
+     "composition": 5,
+     "lighting": 6,
+     "materials": 5,
+     "overall": 5
+    },
+    "second": {
+     "request": 8,
+     "composition": 7,
+     "lighting": 6,
+     "materials": 6,
+     "overall": 7
+    },
+    "better": "second",
+    "reason": "The second picture shows a real rocky hill rising to a twisted tree with clouds drifting past its sides, while the first picture's high camera flattens the land into a rolling grassy field, and its ground-level clouds look like solid blobs sitting among the rocks.",
+    "first_was": "before",
+    "second_was": "after"
+   },
+   {
+    "checklist": {
+     "first": [
+      true,
+      true,
+      true,
+      true
+     ],
+     "second": [
+      false,
+      true,
+      true,
+      true
+     ]
+    },
+    "first": {
+     "request": 8,
+     "composition": 7,
+     "lighting": 6,
+     "materials": 5,
+     "overall": 6
+    },
+    "second": {
+     "request": 6,
+     "composition": 6,
+     "lighting": 7,
+     "materials": 7,
+     "overall": 6
+    },
+    "better": "first",
+    "reason": "The first picture shows what was asked for: a rising rocky hill with a clearly twisted tree on top and clouds drifting low across the slope, while the second has better rock surfaces and warmer light but puts everything on a flat grassy plain with clouds lying on the ground, so it doesn't read as a hillside.",
+    "first_was": "after",
+    "second_was": "before"
+   }
+  ]
+ },
+ "claude-opus-5-5__perfume": {
+  "model": "claude-opus-5-5",
+  "task": "perfume",
+  "judge": "claude-opus-5-5",
+  "scores": {
+   "before": {
+    "request": 9.0,
+    "composition": 8.0,
+    "lighting": 8.0,
+    "materials": 7.5,
+    "overall": 8.0
+   },
+   "after": {
+    "request": 9.0,
+    "composition": 7.0,
+    "lighting": 6.0,
+    "materials": 8.0,
+    "overall": 7.0
+   }
+  },
+  "checklist": {
+   "before": 1.0,
+   "after": 1.0
+  },
+  "wins": {
+   "before": 2,
+   "after": 0,
+   "tie": 0
+  },
+  "winner": "before",
+  "verdicts": [
+   {
+    "checklist": {
+     "first": [
+      true,
+      true,
+      true
+     ],
+     "second": [
+      true,
+      true,
+      true
+     ]
+    },
+    "first": {
+     "request": 9,
+     "composition": 8,
+     "lighting": 8,
+     "materials": 7,
+     "overall": 8
+    },
+    "second": {
+     "request": 9,
+     "composition": 7,
+     "lighting": 6,
+     "materials": 8,
+     "overall": 7
+    },
+    "better": "first",
+    "reason": "The first has a more polished luxury mood thanks to its warm halo backlight and balanced reflection, while the second has more convincing thick glass but harsher, blown-out floor lighting that cheapens the shot.",
+    "first_was": "before",
+    "second_was": "after"
+   },
+   {
+    "checklist": {
+     "first": [
+      true,
+      true,
+      true
+     ],
+     "second": [
+      true,
+      true,
+      true
+     ]
+    },
+    "first": {
+     "request": 9,
+     "composition": 7,
+     "lighting": 6,
+     "materials": 8,
+     "overall": 7
+    },
+    "second": {
+     "request": 9,
+     "composition": 8,
+     "lighting": 8,
+     "materials": 8,
+     "overall": 8
+    },
+    "better": "second",
+    "reason": "Both show a convincing glass bottle with a chrome cap, but the second has the warmer, more deliberate light: a halo behind the bottle shows off the amber liquid and gives a classic luxury mood, while the first has a blown-out, uneven floor.",
+    "first_was": "after",
+    "second_was": "before"
+   }
+  ]
+ },
+ "claude-opus-5-5__spill": {
+  "model": "claude-opus-5-5",
+  "task": "spill",
+  "judge": "claude-opus-5-5",
+  "scores": {
+   "before": {
+    "request": 7.0,
+    "composition": 7.0,
+    "lighting": 6.5,
+    "materials": 6.0,
+    "overall": 6.0
+   },
+   "after": {
+    "request": 7.5,
+    "composition": 7.0,
+    "lighting": 7.0,
+    "materials": 7.0,
+    "overall": 7.0
+   }
+  },
+  "checklist": {
+   "before": 1.0,
+   "after": 0.875
+  },
+  "wins": {
+   "before": 0,
+   "after": 2,
+   "tie": 0
+  },
+  "winner": "after",
+  "verdicts": [
+   {
+    "checklist": {
+     "first": [
+      true,
+      true,
+      true,
+      false
+     ],
+     "second": [
+      true,
+      true,
+      true,
+      true
+     ]
+    },
+    "first": {
+     "request": 7,
+     "composition": 7,
+     "lighting": 7,
+     "materials": 7,
+     "overall": 7
+    },
+    "second": {
+     "request": 7,
+     "composition": 7,
+     "lighting": 7,
+     "materials": 6,
+     "overall": 6
+    },
+    "better": "first",
+    "reason": "The first has a more natural spill with varied block shapes coming out of a tipped box, while the second's cloth has real folds but is badly pinched around a blue block with a visible ring artifact, which hurts it more than the first's stiff, slab-like cloth.",
+    "first_was": "after",
+    "second_was": "before"
+   },
+   {
+    "checklist": {
+     "first": [
+      true,
+      true,
+      true,
+      true
+     ],
+     "second": [
+      true,
+      true,
+      true,
+      true
+     ]
+    },
+    "first": {
+     "request": 7,
+     "composition": 7,
+     "lighting": 6,
+     "materials": 6,
+     "overall": 6
+    },
+    "second": {
+     "request": 8,
+     "composition": 7,
+     "lighting": 7,
+     "materials": 7,
+     "overall": 7
+    },
+    "better": "second",
+    "reason": "The second has a more natural spill, with tilted and varied block shapes, and a cleaner cloth, while the first's cloth is pinched into an odd ring around a block that looks like a simulation error, even though it has more folds.",
+    "first_was": "before",
+    "second_was": "after"
+   }
+  ]
+ },
+ "claude-sonnet-5-5__hillside": {
+  "model": "claude-sonnet-5-5",
+  "task": "hillside",
+  "judge": "claude-opus-5-5",
+  "scores": {
+   "before": {
+    "request": 5.5,
+    "composition": 5.5,
+    "lighting": 5.5,
+    "materials": 4.0,
+    "overall": 4.5
+   },
+   "after": {
+    "request": 5.5,
+    "composition": 5.5,
+    "lighting": 5.5,
+    "materials": 3.5,
+    "overall": 4.5
+   }
+  },
+  "checklist": {
+   "before": 0.75,
+   "after": 0.5
+  },
+  "wins": {
+   "before": 1,
+   "after": 1,
+   "tie": 0
+  },
+  "winner": "tie",
+  "verdicts": [
+   {
+    "checklist": {
+     "first": [
+      false,
+      true,
+      true,
+      false
+     ],
+     "second": [
+      false,
+      true,
+      true,
+      true
+     ]
+    },
+    "first": {
+     "request": 5,
+     "composition": 5,
+     "lighting": 5,
+     "materials": 3,
+     "overall": 4
+    },
+    "second": {
+     "request": 6,
+     "composition": 6,
+     "lighting": 5,
+     "materials": 4,
+     "overall": 5
+    },
+    "better": "second",
+    "reason": "The second has properly textured stone boulders, a more twisted tree and clouds sitting lower around it, while the first's glossy, plastic-looking boulders and high floating cloud blobs undercut the scene, though both show smooth grassy ground instead of a rocky hillside.",
+    "first_was": "after",
+    "second_was": "before"
+   },
+   {
+    "checklist": {
+     "first": [
+      false,
+      true,
+      true,
+      true
+     ],
+     "second": [
+      false,
+      true,
+      true,
+      false
+     ]
+    },
+    "first": {
+     "request": 5,
+     "composition": 5,
+     "lighting": 6,
+     "materials": 4,
+     "overall": 4
+    },
+    "second": {
+     "request": 6,
+     "composition": 6,
+     "lighting": 6,
+     "materials": 4,
+     "overall": 5
+    },
+    "better": "second",
+    "reason": "The second picture shows a hill that clearly rises, with three large boulders grouped around the bent tree, so it reads more like the requested hillside, even though its rocks look like glossy plastic and its clouds sit high instead of low.",
+    "first_was": "before",
+    "second_was": "after"
+   }
+  ]
+ },
+ "claude-sonnet-5-5__perfume": {
+  "model": "claude-sonnet-5-5",
+  "task": "perfume",
+  "judge": "claude-opus-5-5",
+  "scores": {
+   "before": {
+    "request": 5.0,
+    "composition": 6.0,
+    "lighting": 5.5,
+    "materials": 3.0,
+    "overall": 4.0
+   },
+   "after": {
+    "request": 9.0,
+    "composition": 7.0,
+    "lighting": 7.0,
+    "materials": 7.0,
+    "overall": 7.0
+   }
+  },
+  "checklist": {
+   "before": 0.6666666666666666,
+   "after": 1.0
+  },
+  "wins": {
+   "before": 0,
+   "after": 2,
+   "tie": 0
+  },
+  "winner": "after",
+  "verdicts": [
+   {
+    "checklist": {
+     "first": [
+      false,
+      true,
+      true
+     ],
+     "second": [
+      true,
+      true,
+      true
+     ]
+    },
+    "first": {
+     "request": 5,
+     "composition": 6,
+     "lighting": 5,
+     "materials": 3,
+     "overall": 4
+    },
+    "second": {
+     "request": 9,
+     "composition": 7,
+     "lighting": 7,
+     "materials": 7,
+     "overall": 7
+    },
+    "better": "second",
+    "reason": "The second shows clear refractive glass, believable amber liquid and a well-modelled chrome cap on a clean studio backdrop, while the first's frosted shell around a flat, glowing peach block reads more like a lamp than a glass perfume bottle.",
+    "first_was": "before",
+    "second_was": "after"
+   },
+   {
+    "checklist": {
+     "first": [
+      true,
+      true,
+      true
+     ],
+     "second": [
+      false,
+      true,
+      true
+     ]
+    },
+    "first": {
+     "request": 9,
+     "composition": 7,
+     "lighting": 7,
+     "materials": 7,
+     "overall": 7
+    },
+    "second": {
+     "request": 5,
+     "composition": 6,
+     "lighting": 6,
+     "materials": 3,
+     "overall": 4
+    },
+    "better": "first",
+    "reason": "The first image shows a believable refractive glass bottle with amber liquid and a convincing chrome cap, while the second's bottle looks like frosted plastic with an opaque, glowing block for liquid and no real glass refraction.",
+    "first_was": "after",
+    "second_was": "before"
+   }
+  ]
+ },
+ "claude-sonnet-5-5__spill": {
+  "model": "claude-sonnet-5-5",
+  "task": "spill",
+  "judge": "claude-opus-5-5",
+  "scores": {
+   "before": {
+    "request": 6.0,
+    "composition": 6.5,
+    "lighting": 5.0,
+    "materials": 4.0,
+    "overall": 5.0
+   },
+   "after": {
+    "request": 5.5,
+    "composition": 6.0,
+    "lighting": 7.0,
+    "materials": 5.0,
+    "overall": 5.0
+   }
+  },
+  "checklist": {
+   "before": 0.625,
+   "after": 0.625
+  },
+  "wins": {
+   "before": 1,
+   "after": 1,
+   "tie": 0
+  },
+  "winner": "tie",
+  "verdicts": [
+   {
+    "checklist": {
+     "first": [
+      true,
+      true,
+      true,
+      false
+     ],
+     "second": [
+      true,
+      true,
+      true,
+      false
+     ]
+    },
+    "first": {
+     "request": 6,
+     "composition": 6,
+     "lighting": 7,
+     "materials": 5,
+     "overall": 5
+    },
+    "second": {
+     "request": 6,
+     "composition": 7,
+     "lighting": 5,
+     "materials": 4,
+     "overall": 5
+    },
+    "better": "first",
+    "reason": "The first has softer, more modelled lighting, a more believable spill spreading out from under the cloth and a wider range of block shapes, though its wavy wood and the black-faced block are flaws; the second has flatter lighting, the same rippled wood, blocks that pass through each other and a crumpled cloth that sits on the corner rather than hanging down in folds.",
+    "first_was": "after",
+    "second_was": "before"
+   },
+   {
+    "checklist": {
+     "first": [
+      true,
+      true,
+      false,
+      false
+     ],
+     "second": [
+      true,
+      true,
+      false,
+      false
+     ]
+    },
+    "first": {
+     "request": 6,
+     "composition": 6,
+     "lighting": 5,
+     "materials": 4,
+     "overall": 5
+    },
+    "second": {
+     "request": 5,
+     "composition": 6,
+     "lighting": 7,
+     "materials": 5,
+     "overall": 5
+    },
+    "better": "first",
+    "reason": "Both pictures have wavy, rippled wood and blocks sitting flat on the table, but the first has a believable crumpled cloth on the corner, while the second's cloth sticks out stiffly past the table edge without hanging and one block renders as a black hole, which outweighs its better lighting.",
+    "first_was": "before",
+    "second_was": "after"
+   }
+  ]
+ }
+}

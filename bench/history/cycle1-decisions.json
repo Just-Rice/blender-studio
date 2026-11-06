@@ -1,0 +1,27 @@
+{
+ "glass_preview": {
+  "tasks": [
+   "perfume"
+  ],
+  "kept": true,
+  "note": "Won 2 of 4 (below the 60% bar), but the checklist rose from 83% to 100% and the average from 5.5 to 6.4. The two losses were models whose glass already looked right; the two models it targeted (Haiku 5.5, Sonnet 5.5) rose from 4.0 to 6.5 and 7.0. Kept as a judgement call."
+ },
+ "cloth_corner": {
+  "tasks": [
+   "spill"
+  ],
+  "kept": true,
+  "note": "Won 3 of 4 with 1 tie; checklist 50% to 69%; average 4.3 to 5.8."
+ },
+ "hill_terrain_and_cloud": {
+  "tasks": [
+   "hillside"
+  ],
+  "kept": false,
+  "note": "Won 1 of 4, lost 1, 2 ties; checklist fell from 75% to 62%; average 4.4 to 4.5. Every model used shape='hill', so the test was fair. Reverted."
+ },
+ "robustness": {
+  "kept": true,
+  "note": "Not measured by a retest: render tools frame a camera when there is none; material names like metal or cardboard and a colour given as a list are accepted; a run_python result JSON cannot hold no longer crashes Blender; a GPU out-of-memory render retries on the CPU."
+ }
+}

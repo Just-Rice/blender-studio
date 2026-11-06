@@ -35,9 +35,6 @@ PRESETS = {
     "wax": dict(color="#f1e3c0", inputs={"Roughness": 0.4, "Subsurface Weight": 1.0, "Subsurface Scale": 0.1}),
     "paper": dict(color="#f1ece2", inputs={"Roughness": 0.95, "Specular IOR Level": 0.2}),
     "cardboard": dict(color="#b98b5c", inputs={"Roughness": 0.95, "Specular IOR Level": 0.2}, detail="rough"),
-    # Soft and matte, lit from within like real cloud, never shiny like a white plastic blob.
-    "cloud": dict(color="#f5f6f9", inputs={"Roughness": 1.0, "Specular IOR Level": 0.0, "Subsurface Weight": 1.0,
-                                           "Subsurface Scale": 0.5, "Sheen Weight": 0.5, "Sheen Roughness": 1.0}),
     "glow": dict(color="#ff5a1f", inputs={"Roughness": 0.4, "Emission Strength": 5.0}, emissive=True),
     "neon_tube": dict(color="#22e0ff", inputs={"Roughness": 0.2, "Emission Strength": 12.0}, emissive=True),
 }
@@ -154,8 +151,8 @@ def build_material(name, preset, color=None, size=1.0, local_size=1.0, overrides
 ALIASES = {"metal": "steel", "metallic": "steel", "iron": "steel", "silver": "chrome", "mirror": "chrome",
            "brass": "gold", "bronze": "copper", "plastic": "plastic_glossy", "matte_plastic": "plastic_matte",
            "cloth": "fabric", "linen": "fabric", "cotton": "fabric", "rock": "stone", "marble": "porcelain",
-           "liquid": "water", "emission": "glow", "emissive": "glow", "light": "glow", "smoke": "cloud",
-           "fog": "cloud", "mist": "cloud", "card": "cardboard"}
+           "liquid": "water", "emission": "glow", "emissive": "glow", "light": "glow",
+           "card": "cardboard"}
 
 
 @command()
