@@ -1,5 +1,46 @@
 # Benchmark: plain Blender versus Blender Studio
 
+## Cycle 1, 4 to 6 November 2026: eight harder requests, then fixes and a retest
+
+The request set was replaced with eight that need people, physics, organic shapes, ready-made models, glass
+and video (`bench/tasks.py`): a mug product shot, a rocky hillside, three people at a bus stop, spilled toy
+blocks with a cloth, a reading corner, a glass perfume bottle, Swiss cheese with a bite, and a 3-second video
+of a robot walking in and waving. Each has a short checklist the judge ticks before scoring. Haiku 4.5,
+Haiku 5.5, Sonnet 5.5 and Opus 5.5 ran every request both ways (32 pairs); Opus 5.5 judged blind.
+
+| Model | Plain | Tools | Tools judged better | Checklist plain | Checklist tools |
+| --- | --- | --- | --- | --- | --- |
+| Haiku 4.5 | 1.3 | 4.1 | 8 of 8 | 14% | 62% |
+| Haiku 5.5 | 4.7 | 5.8 | 5 of 8 | 91% | 81% |
+| Sonnet 5.5 | 4.8 | 5.9 | 5 of 8 | 89% | 86% |
+| Opus 5.5 | 6.5 | 6.6 | 3 of 8 | 98% | 94% |
+| **All** | **4.3** | **5.6** | **21 of 32 (7 plain, 4 ties)** | **73%** | **81%** |
+
+- The weaker the model, the more the tools help. Opus 5.5 was level: plain won its mug, hillside, cheese and
+  spill.
+- 18 of 841 tool calls failed with the tools (2%), 31 of 489 with plain Blender (6%).
+- Cost with the tools against plain: Haiku 4.5 $1.09 / $1.61, Haiku 5.5 $0.13 / $0.08, Sonnet $0.67 / $0.47,
+  Opus $3.43 / $3.20.
+- Total times are unreliable this cycle (one laptop, sleeping and swapping); model times are not.
+- Gemini was left out: the free tier kept answering "high demand" for many minutes at a time.
+
+**Fixes and retest.** Three problems that hit several models were fixed, and each model re-ran the affected
+requests with the tools only. The judge compared each new picture with the cycle's earlier one, blind. The
+rule: keep a fix if the new pictures win at least 60% and the checklist does not drop.
+
+| Fix | Request | New picture better | Average | Checklist | Decision |
+| --- | --- | --- | --- | --- | --- |
+| Previews of scenes with glass use Cycles | perfume | 2 of 4 | 5.5 to 6.4 | 83% to 100% | Kept (judgement call) |
+| `drape_cloth(at=...)` drops a cloth on a corner | spill | 3 of 4, 1 tie | 4.3 to 5.8 | 50% to 69% | Kept |
+| Terrain `shape="hill"`, `rocky`, a `cloud` material | hillside | 1 of 4, 1 loss, 2 ties | 4.4 to 4.5 | 75% to 62% | Reverted |
+
+The glass fix fell short of the 60% bar but is kept: its two losses were Haiku 4.5 and Opus, whose glass
+already looked right, while the two models it targeted rose from 4.0 to 6.5 (Haiku 5.5) and 7.0 (Sonnet).
+Also fixed, without a retest: rendering with no camera frames one; common material names (metal,
+cardboard...) and a colour given as a list are accepted; a `run_python` result JSON cannot hold no longer
+crashes Blender; a render that runs out of GPU memory retries on the CPU. Raw decisions:
+`bench/history/cycle1-decisions.json`; findings: `bench/history/cycle1-findings.md`.
+
 ## Round 2, 13 to 14 October 2026: every Claude model with the fixed tools
 
 After the fixes described below, Haiku 4.5, Haiku 5.5, Sonnet 5.5 and Opus 5.5 were run on the same three

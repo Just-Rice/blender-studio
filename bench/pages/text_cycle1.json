@@ -1,0 +1,37 @@
+{
+ "hero": "In a blind test of four Claude models on eight requests, its pictures were judged better than plain Blender's in 21 of 32 pairs.",
+ "intro": "To see whether the tools help, the same model was given the same one-line request twice: once with plain Blender, where it writes code, renders and looks at the result, and once with Blender Studio. This cycle covers Claude Haiku 4.5, Haiku 5.5, Sonnet 5.5 and Opus 5.5 on eight requests chosen to need people, physics, organic shapes, ready-made models, glass and video. Claude Opus 5.5 judged each pair blind, under neutral file names, and first ticked a short checklist of what each request asked for.",
+ "short": "Blender Studio's picture was judged better in 21 of 32 pairs, plain Blender's in 7, with 4 ties. The average score was 5.6 against 4.3 out of 10, and the pictures met 81% of the requests' checklists against 73%. The weaker the model, the more the tools helped.",
+ "verdict": "Across eight harder requests, Blender Studio helped every Claude model, but by very different amounts. A blind judge preferred its picture in 21 of 32 pairs, with an average of 5.6 against 4.3 out of 10. Haiku 4.5 gained the most and Opus 5.5 almost nothing.",
+ "findings": [
+  "<b>The weaker the model, the bigger the gain.</b> Haiku 4.5 went from 1.3 to 4.1 and won all eight pairs with the tools. Haiku 5.5 rose from 4.7 to 5.8 and Sonnet 5.5 from 4.8 to 5.9. Opus 5.5 was level, 6.5 against 6.6, winning 3, losing 4 and tying 1.",
+  "<b>Requests got done more often.</b> With the tools, pictures met 81% of their checklists against 73%. For Haiku 4.5 it was 62% against 14%: without the tools most of its pictures did not show what was asked.",
+  "<b>Where plain Blender won.</b> Opus without the tools made a rising hillside, a tidier mug shot, a cleaner cheese and a more natural spill. Haiku 5.5 and Sonnet lost the perfume bottle because their glass looked like plastic, and the hillside was the weakest request overall: tools won 1 of 4.",
+  "<b>Fewer failed steps.</b> 18 of 841 tool calls failed with the tools (2%), against 31 of 489 with plain Blender (6%).",
+  "<b>Cost.</b> Haiku 4.5 was cheaper with the tools ($1.09 against $1.61). The others paid a little more, mostly for reading the tool descriptions: Opus $3.43 against $3.20, Sonnet $0.67 against $0.47, Haiku 5.5 $0.13 against $0.08."
+ ],
+ "caveats": [
+  "One attempt per pair. With 32 pairs the overall picture is clear, but any single pair can go either way on another day.",
+  "Opus judged its own pictures too, blind and with no memory of making them. Its scores for the same picture can drift by about half a point between sessions.",
+  "&ldquo;Total time&rdquo; is unreliable this cycle: the runs shared one laptop, which slept, swapped memory and had runs paused to keep it responsive. &ldquo;Time on the model&rdquo; is not affected.",
+  "Gemini was left out of this cycle: its free tier kept rejecting requests with &ldquo;high demand&rdquo; errors for minutes at a time.",
+  "&ldquo;Plain Blender&rdquo; is this project's own small stand-in, and the test was run by the person who built the tools."
+ ],
+ "method": [
+  "<b>Plain Blender</b> means four tools: list the scene, run Python inside Blender, render the camera view, and render a strip of frames for video. It starts from Blender's default scene.",
+  "<b>Blender Studio</b> means the full 43-tool set, including its own run-Python tool, starting from an empty scene.",
+  "Both ways got the same system prompt, the same request, a limit of 40 turns and an hour, and the same size of picture back. Claude models ran through the Claude command line with nothing else loaded.",
+  "The judge was Claude Opus 5.5. It saw each pair twice under neutral file names, once each way round, ticked the request's checklist for both pictures, then scored them. Where it disagreed with itself the pair counts as a tie.",
+  "&ldquo;Tokens read&rdquo; counts everything sent to the model across all its requests, including repeats it reads from cache."
+ ],
+ "fix_heading": "What this cycle fixed, and whether it worked.",
+ "fix_intro": "The judge's comments and the recorded runs pointed at three problems that hit several models. Each fix was then retested: every model ran the affected requests again with the fixed tools, and the judge compared the new picture with the old one, blind. A fix stays only if the new pictures win at least 60% of those comparisons and meet at least as much of the checklist.",
+ "fix_list": [
+  "<b>Glass looked solid in previews.</b> The fast preview renderer cannot see through one glass surface into another, so a bottle of perfume looked like dark plastic, and models replaced the glass with their own workarounds. Previews of scenes with glass now use the realistic renderer. Kept: the checklist went from 83% to 100% and the average from 5.5 to 6.4; Haiku 5.5 and Sonnet rose from 4.0 to 6.5 and 7.0. It won only 2 of 4, below the bar, because Haiku 4.5's and Opus's glass already looked right; kept as a judgement call.",
+  "<b>A cloth could not go over one corner.</b> The draping tool always centred the cloth on the whole table. It can now drop it on a named corner so it hangs over two edges. Kept: won 3 of 4 with 1 tie; checklist 50% to 69%.",
+  "<b>Ground that rises like a hillside.</b> The terrain tool only made gently rolling ground, and no model's hillside rose. A hill shape, rocky ledges and a soft cloud material were added. Reverted: every model used them, but the result was 1 win, 1 loss and 2 ties, and the checklist fell.",
+  "<b>Smaller things.</b> Rendering without a camera now sets one up instead of failing; common material names such as metal and cardboard work; a result Blender cannot send back no longer crashes it; and a render that runs out of graphics memory retries on the processor."
+ ],
+ "fix_note": "Scores are the judge's average of two blind looks. The pictures below are each model's final picture: plain Blender, the tools before the fix, and the tools after it.",
+ "card_note": "Full numbers and method, including earlier rounds, are in <a href=\"https://github.com/Just-Rice/blender-studio/blob/main/bench/RESULTS.md\">the repository</a>."
+}
