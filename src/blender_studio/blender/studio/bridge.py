@@ -20,6 +20,13 @@ def _client_thread(conn):
         for line in stream:
             if not line.strip():
                 continue
+            # Every real request is one JSON object per line. Anything else is
+            # hung up on at once: a web page can POST to 127.0.0.1, and since
+            # the body of such a request would otherwise be read as a command
+            # (raw_python runs any code), its HTTP request line must end the
+            # connection before the body is ever reached.
+            if not line.lstrip().startswith(b"{"):
+                return
             reply = queue.Queue(1)
             _requests.put((line, reply))
             stream.write(reply.get() + b"\n")
